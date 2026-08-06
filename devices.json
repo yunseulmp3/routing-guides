@@ -1128,7 +1128,7 @@
           "해결": "Snapshots에 Store, 복구는 Mix 1 클릭"
         }
       ],
-      "guideImage": "rme-ucx.png",
+      "guideImage": null,
       "status": "완료 (주석본 검수 통과 · 템플릿 기준본)",
       "setupSteps": [
         {
@@ -1216,7 +1216,8 @@
           "check": "스냅샷 슬롯에 저장되면 통과.",
           "warn": "세팅이 풀리면 Mix 1을 클릭해 복구합니다."
         }
-      ]
+      ],
+      "guideImageNote": "주석본은 완성되어 있으나 레포에 업로드되지 않음. 올린 뒤 실제 파일명을 여기 적을 것."
     },
     "topping-e-otg": {
       "id": "topping-e-otg",
@@ -1277,7 +1278,7 @@
           "해결": "Workspace 저장 아이콘으로 저장"
         }
       ],
-      "guideImage": "topping-e-otg.png",
+      "guideImage": null,
       "status": "완료 (박스 위치 최종 검수 남음)",
       "setupSteps": [
         {
@@ -1350,7 +1351,8 @@
           "do": "**Workspace 저장 아이콘**으로 현재 설정을 저장합니다.",
           "check": "저장 후 프로그램을 껐다 켜도 유지되면 통과."
         }
-      ]
+      ],
+      "guideImageNote": "주석본은 완성되어 있으나 레포에 업로드되지 않음. 올린 뒤 실제 파일명을 여기 적을 것."
     },
     "arturia-minifuse": {
       "id": "arturia-minifuse",
