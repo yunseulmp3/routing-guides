@@ -1,0 +1,1902 @@
+{
+  "_meta": {
+    "name": "윤슬 라우팅 지식베이스",
+    "purpose": "라우팅 Q&A 앱(routing-qa.jsx)이 기기별 질문에 답할 때 컨텍스트로 주입하는 정제 지식. 원본 매뉴얼을 통째로 넣지 않고, 기기마다 윤슬 표준에 맞춰 정제한 핵심만 담는다.",
+    "repo": "github.com/yunseulmp3/routing-guides",
+    "guideRawBase": "https://raw.githubusercontent.com/yunseulmp3/routing-guides/main/",
+    "schemaVersion": 1,
+    "howAppUses": "질문에서 device.id 또는 aliases를 감지 → 해당 devices 항목 + standard를 프롬프트에 주입 → 답변. 항목이 없으면 웹검색+manualUrl로 폴백하고 답에 '추정' 명시.",
+    "updated": "2026-07-27",
+    "guideRawBaseNote": "주석 이미지를 레포 루트에 두는 기준. 나중에 guides/ 폴더로 옮기면 이 값 끝에 guides/ 를 붙이면 된다."
+  },
+  "standard": {
+    "요약": "소프트웨어 루프백(보이스미터/가상케이블) 미사용. 인터페이스 자체 하드웨어 루프백만 사용.",
+    "신호경로": "마이크 → 인터페이스 입력 → REAPER(보컬 체인) → 재생(Playback) 1/2 복귀 → 루프백 → OBS",
+    "보컬체인": [
+      "AutoTune",
+      "윤슬 Clean",
+      "DeEss",
+      "윤슬 Tone",
+      "Limiter"
+    ],
+    "채널배치": {
+      "재생 1/2": "마이크 (채널명을 MIC로 변경)",
+      "재생 3/4": "크롬 (MR·반주)",
+      "재생 5/6~": "디스코드 등 나머지를 순서대로"
+    },
+    "루프백원칙": "루프백에는 MIC(재생 1/2)만. 나머지는 전부 내림(−∞).",
+    "obs": "소스별 분리 캡처(마이크/크롬/PC 각각) → 독립 밸런스. 루프백은 마이크만 담당.",
+    "샘플레이트": {
+      "표준": 48000,
+      "이유": "OBS 기본값이 48kHz. 48로 통일하면 마이크부터 송출까지 변환 없이 그대로 나감.",
+      "핵심": "숫자 자체보다 인터페이스·REAPER·OBS 세 곳이 같은 값인지가 중요. 하나만 어긋나면 무음·피치 오류.",
+      "예외": {
+        "audient-id14": 44100
+      },
+      "예외이유": "iD14는 48kHz에서 문제 이력이 있어 44100 유지.",
+      "asio": "REAPER는 기기 전용 ASIO 사용(ASIO4ALL 금지).",
+      "obs설정위치": "OBS → 설정 → 오디오 → 샘플레이트"
+    },
+    "주의": [
+      "페이더/노브 0.0은 '꺼짐'이 아니라 유니티(그대로 통과). 진짜 끄기는 −∞(맨 아래).",
+      "하드웨어 입력의 생마이크가 믹스에 섞이면 방송에 에코/더블링 — 믹스 경유형 기기에서 반드시 확인.",
+      "헤드폰 모니터는 방송 송출과 무관 → 고객이 자유롭게 조절 가능."
+    ]
+  },
+  "loopbackTypes": {
+    "A": {
+      "label": "직결형",
+      "설명": "전용 루프백 채널의 소스를 드롭다운으로 지정",
+      "청소": false,
+      "예": [
+        "Topping E OTG",
+        "Topping M62",
+        "SSL 18",
+        "SSL 12",
+        "Lewitt Connect 6"
+      ]
+    },
+    "B": {
+      "label": "믹스 경유형",
+      "설명": "루프백 소스로 '믹스(CUE 등)'를 지정 → 그 믹스 내용을 청소",
+      "청소": true,
+      "예": [
+        "Audient iD14"
+      ]
+    },
+    "C": {
+      "label": "출력 서브믹스형",
+      "설명": "출력 채널에 루프백을 걸면 그 출력의 서브믹스가 곧 루프백 내용",
+      "청소": true,
+      "예": [
+        "RME TotalMix"
+      ]
+    }
+  },
+  "devices": {
+    "ssl-18": {
+      "id": "ssl-18",
+      "name": "SSL 18",
+      "aliases": [
+        "SSL18",
+        "ssl 18",
+        "SSL 360 18",
+        "솔리드스테이트로직 18"
+      ],
+      "software": "SSL 360° Mixer",
+      "type": {
+        "code": "A",
+        "label": "직결형",
+        "cleaning": false
+      },
+      "oneLiner": "루프백 소스를 드롭다운으로 직접 지정하는 방식(유형 A). 생마이크가 섞일 경로가 없어 믹스 청소 불필요 — Topping과 같은 '안전' 계열.",
+      "coreSettings": [
+        {
+          "n": 2,
+          "control": "LOOPBACK SOURCE",
+          "위치": "오른쪽 CONTROL 패널",
+          "값": "Playback 1-2",
+          "이유": "루프백이 잡을 소스를 재생 1/2(=MIC)로 지정. 방송에 나가는 마이크 소리를 결정하는 단 한 곳.",
+          "경고": "Monitor·HP 같은 '믹스 버스'로 두면 생마이크가 섞여 에코·더블링. 반드시 Playback 1-2로."
+        },
+        {
+          "n": 3,
+          "control": "9-10 INPUT SOURCE",
+          "위치": "LOOPBACK SOURCE 바로 아래 칸",
+          "값": "Loopback",
+          "기본값주의": "초기/기본이 Talkback인 경우가 많음 → Loopback으로 변경",
+          "이유": "여기서 지정한 루프백이 입력 9-10으로 들어와 OBS가 그 소리를 잡을 수 있게 함."
+        }
+      ],
+      "checks": [
+        {
+          "n": 1,
+          "point": "Playback 1-2 미터 = MIC",
+          "정상": "말할 때 Playback 1-2 미터가 뛴다 (REAPER 보컬 체인을 거친 소리가 재생 1/2로 복귀).",
+          "비정상시": "REAPER 출력이 1/2로 나가는지, 마이크 게인·48V·케이블 확인. 채널명을 MIC로 바꿔두면 헷갈리지 않음."
+        },
+        {
+          "n": 4,
+          "point": "SAMPLE RATE = 48000",
+          "정상": "인터페이스·REAPER·OBS 세 곳 모두 48000.",
+          "비정상시": "화면 기본이 44100인 경우가 많음 → 48000으로 변경. 값이 다르면 무음 또는 피치 오류."
+        }
+      ],
+      "save": {
+        "n": 5,
+        "위치": "왼쪽 PROFILE",
+        "동작": "SAVE AS로 현재 설정을 이름 붙여 저장. 세팅이 풀리면 LOAD로 통째로 복구.",
+        "주의": "SAVE는 회색(기본 프로필 잠금)이라 SAVE AS로 새 프로필 저장."
+      },
+      "channelLayout": {
+        "재생 1/2": "마이크(MIC) — 루프백 소스",
+        "재생 3/4": "크롬(MR·반주)",
+        "재생 5/6~": "디스코드 등",
+        "메모": "루프백 소스는 언제나 Playback 1-2(MIC). 크롬·디스코드(PC)는 OBS에서 소스별로 따로 캡처."
+      },
+      "obsDevice": "SSL 18 Input 9-10",
+      "pitfalls": [
+        "루프백 소스를 버스(Monitor/HP)로 두지 말 것 — 생마이크 더블링.",
+        "9-10 입력 소스가 Loopback인지 확인 (Talkback으로 되어 있으면 마이크가 방송에 안 나감).",
+        "샘플레이트 48000 일치(인터페이스·REAPER·OBS 세 곳)."
+      ],
+      "symptoms": [
+        {
+          "증상": "방송에 마이크가 에코/더블링으로 들림",
+          "원인": "루프백 소스가 버스(Monitor/HP)로 되어 생마이크가 섞임",
+          "해결": "LOOPBACK SOURCE를 Playback 1-2로 변경"
+        },
+        {
+          "증상": "방송에 마이크 소리가 아예 안 나감",
+          "원인": "9-10 INPUT SOURCE가 Loopback이 아님(예: Talkback) 또는 OBS 장치가 Input 9-10이 아님",
+          "해결": "9-10 INPUT SOURCE=Loopback, OBS 마이크 장치=SSL 18 Input 9-10"
+        },
+        {
+          "증상": "소리는 나는데 안 나가거나 피치가 틀어짐",
+          "원인": "샘플레이트 불일치",
+          "해결": "SSL·REAPER·OBS 모두 48000"
+        },
+        {
+          "증상": "Playback 1-2 미터가 안 뜸",
+          "원인": "REAPER 출력이 재생 1/2로 안 감, 또는 마이크 입력 문제",
+          "해결": "REAPER 출력 라우팅 1/2 확인, 마이크 게인·48V·케이블 확인"
+        },
+        {
+          "증상": "윈도우 업데이트 후 세팅이 풀림",
+          "원인": "프로필 미저장",
+          "해결": "SAVE AS로 저장 후, 풀리면 PROFILE > LOAD로 복구"
+        }
+      ],
+      "manualUrl": "https://support.solidstatelogic.com/hc/en-gb/articles/24644268197021-How-do-I-use-the-Loopback-Feature-on-SSL-18",
+      "userGuideUrl": "https://support.solidstatelogic.com/hc/en-gb/articles/23411101112477-SSL-18-User-Guide",
+      "guideImage": "ssl-18.png",
+      "status": "완료",
+      "setupSteps": [
+        {
+          "step": 1,
+          "title": "소프트웨어·드라이버 설치",
+          "do": "제조사 공식 사이트에서 SSL 360°와 전용 ASIO 드라이버를 받아 설치하고 PC를 재시작합니다.",
+          "check": "장치 관리자와 윈도우 소리 설정에 기기 이름이 보이면 통과.",
+          "warn": "ASIO4ALL은 쓰지 않습니다. 반드시 이 기기 전용 ASIO를 씁니다."
+        },
+        {
+          "step": 2,
+          "title": "샘플레이트를 48000으로 통일",
+          "do": "윈도우 소리 설정, SSL 360°, REAPER, OBS 네 곳을 모두 48000으로 맞춥니다.",
+          "where": "윈도우: 설정→시스템→소리→장치 속성→고급 / OBS: 설정→오디오→샘플레이트 / REAPER: 옵션→환경설정→오디오→장치",
+          "check": "네 곳의 숫자가 모두 같으면 통과.",
+          "warn": "OBS 기본값이 48kHz입니다. 하나만 달라도 무음이나 피치 오류가 납니다."
+        },
+        {
+          "step": 3,
+          "title": "마이크 연결과 게인",
+          "do": "마이크를 SSL 18의 마이크 입력에 꽂고, 콘덴서 마이크면 48V를 켠 뒤 게인을 올립니다.",
+          "check": "말할 때 입력 미터가 −18 ~ −12 dB 근처에서 움직이면 적당합니다.",
+          "warn": "페이더·노브의 0.0은 '꺼짐'이 아니라 유니티(그대로 통과)입니다. 진짜 끄기는 −∞."
+        },
+        {
+          "step": 4,
+          "title": "REAPER 오디오 장치 설정",
+          "do": "REAPER 옵션→환경설정→오디오→장치에서 이 기기의 전용 ASIO를 선택합니다.",
+          "check": "REAPER 하단에 장치 이름이 뜨고 입력 트랙 미터가 움직이면 통과."
+        },
+        {
+          "step": 5,
+          "title": "REAPER 보컬 체인 구성",
+          "do": "마이크 트랙에 AutoTune → 윤슬 Clean → DeEss → 윤슬 Tone → Limiter 순서로 겁니다.",
+          "check": "헤드폰으로 들었을 때 처리된 목소리가 들리면 통과."
+        },
+        {
+          "step": 6,
+          "title": "REAPER 출력을 재생 1/2로",
+          "do": "마이크 트랙의 출력(하드웨어 아웃)을 1/2로 보냅니다. 나머지 채널로 새지 않게 합니다.",
+          "check": "SSL 360°의 재생 1/2 미터가 말할 때 뛰면 통과. 이게 안 뛰면 아래 단계는 의미 없습니다.",
+          "warn": "여기서 미터가 안 뜨면 루프백을 아무리 만져도 소용없습니다. 반드시 먼저 해결하세요."
+        },
+        {
+          "step": 7,
+          "title": "LOOPBACK SOURCE = Playback 1-2",
+          "do": "오른쪽 CONTROL 패널의 LOOPBACK SOURCE를 **Playback 1-2**로 지정합니다.",
+          "where": "SSL 360° Mixer 오른쪽 CONTROL 패널",
+          "check": "드롭다운에 Playback 1-2가 표시되면 통과.",
+          "warn": "Monitor·HP 같은 '믹스 버스'로 두면 생마이크가 섞여 에코·더블링이 납니다."
+        },
+        {
+          "step": 8,
+          "title": "9-10 INPUT SOURCE = Loopback",
+          "do": "바로 아래 칸의 9-10 INPUT SOURCE를 **Loopback**으로 바꿉니다.",
+          "where": "LOOPBACK SOURCE 바로 아래",
+          "check": "Loopback으로 표시되면 통과.",
+          "warn": "기본값이 Talkback인 경우가 많습니다. 이것 때문에 마이크가 방송에 안 나가는 사례가 가장 흔합니다."
+        },
+        {
+          "step": 9,
+          "title": "OBS 마이크 장치 지정",
+          "do": "OBS에서 마이크 소스의 장치를 **SSL 18 Input 9-10**로 지정합니다.",
+          "where": "OBS: 설정→오디오, 또는 소스 목록의 오디오 입력 캡처",
+          "check": "OBS 오디오 믹서에서 말할 때 미터가 뛰면 통과.",
+          "warn": "크롬·디스코드는 OBS에서 소스별로 따로 잡습니다. 루프백에는 마이크만 들어갑니다."
+        },
+        {
+          "step": 10,
+          "title": "최종 확인 — 녹화 테스트",
+          "do": "OBS로 30초 녹화한 뒤 재생해서 ① 목소리가 들리는지 ② 에코·더블링이 없는지 ③ 크롬·디스코드가 따로 조절되는지 확인합니다.",
+          "check": "세 가지가 모두 정상이면 완료입니다.",
+          "warn": "목소리가 두 번 들리면 루프백 소스가 잘못된 것입니다. 루프백 단계로 돌아가세요."
+        },
+        {
+          "step": 11,
+          "title": "설정 저장",
+          "do": "왼쪽 PROFILE에서 **SAVE AS**로 이름을 붙여 저장합니다.",
+          "check": "프로필 목록에 이름이 보이면 통과.",
+          "warn": "SAVE는 회색으로 잠겨 있으므로 SAVE AS를 씁니다. 세팅이 풀리면 LOAD로 복구합니다."
+        }
+      ]
+    },
+    "ssl-12": {
+      "id": "ssl-12",
+      "name": "SSL 12",
+      "aliases": [
+        "SSL12",
+        "ssl 12",
+        "SSL 360 12",
+        "솔리드스테이트로직 12"
+      ],
+      "software": "SSL 360° Mixer",
+      "type": {
+        "code": "A",
+        "label": "직결형",
+        "cleaning": false
+      },
+      "oneLiner": "루프백 소스를 드롭다운 하나로 지정(유형 A). SSL 18과 달리 입력 소스를 따로 바꿀 필요가 없어 더 간단 — 설정 지점이 단 한 곳.",
+      "vs_ssl18": "SSL 18은 LOOPBACK SOURCE + 9-10 INPUT SOURCE 두 곳을 설정해야 하지만, SSL 12는 LOOPBACK SOURCE 한 곳만 설정하면 끝.",
+      "coreSettings": [
+        {
+          "n": 2,
+          "control": "LOOPBACK SOURCE",
+          "위치": "오른쪽 CONTROL 패널 맨 아래 드롭다운",
+          "값": "Playback 1-2",
+          "기본값주의": "기본이 'Loopback Off'(꺼짐) → 반드시 Playback 1-2로 변경",
+          "이유": "루프백이 잡을 소스를 재생 1/2(=MIC)로 지정. 방송에 나가는 마이크 소리를 결정하는 단 한 곳이며, SSL 12는 이것만으로 루프백이 완성됨.",
+          "경고": "Monitor·HP 같은 '믹스 버스'로 두면 생마이크가 섞여 에코·더블링. 반드시 Playback 1-2로."
+        }
+      ],
+      "checks": [
+        {
+          "n": 1,
+          "point": "Playback 1-2 미터 = MIC",
+          "정상": "말할 때 Playback 1-2 미터가 뛴다 (REAPER 보컬 체인을 거친 소리가 재생 1/2로 복귀).",
+          "비정상시": "REAPER 출력이 1/2로 나가는지, 마이크 게인·48V·케이블 확인. 채널명을 MIC로 바꿔두면 헷갈리지 않음."
+        },
+        {
+          "n": 3,
+          "point": "SAMPLE RATE = 48000",
+          "정상": "인터페이스·REAPER·OBS 세 곳 모두 48000.",
+          "특이사항": "DAW가 열려 있으면 이 칸이 회색으로 잠기고 DAW 값을 따라감 → 바꿀 때는 REAPER 쪽을 바꾼다.",
+          "비정상시": "값이 다르면 무음 또는 피치 오류."
+        }
+      ],
+      "save": {
+        "n": 4,
+        "위치": "왼쪽 PROFILE",
+        "동작": "SAVE로 기존 프로필 덮어쓰기, SAVE AS로 새 이름 저장. 세팅이 풀리면 LOAD로 통째로 복구.",
+        "주의": "프로필 이름 옆 별표(*)는 저장되지 않은 변경이 있다는 뜻. SSL 18과 달리 SAVE도 활성화되어 있음(기본 프로필이 아닌 사용자 프로필이라서)."
+      },
+      "channelLayout": {
+        "재생 1/2": "마이크(MIC) — 루프백 소스",
+        "재생 3/4": "크롬(MR·반주)",
+        "재생 5/6~": "디스코드 등",
+        "메모": "SSL 12 믹서는 Playback 1-2 / 3-4 / 5-6 / 7-8 네 쌍. 루프백 소스는 언제나 Playback 1-2(MIC)."
+      },
+      "obsDevice": "SSL 12의 Loopback 입력",
+      "obsDeviceStatus": "현장 확인 필요 — 공식 문서상 'Loopback'이라는 이름의 입력을 선택하라고만 되어 있고 채널 번호는 명시되지 않음. OBS에서 실제로 잡히는 장치·채널명 확인 후 확정할 것.",
+      "pitfalls": [
+        "드롭다운이 'Loopback Off'로 돌아가 있지 않은지 확인 — 꺼져 있으면 방송에 마이크가 안 나감.",
+        "루프백 소스를 버스(Monitor/HP)로 두지 말 것 — 생마이크 더블링.",
+        "샘플레이트 48000 일치(DAW가 열려 있으면 SSL 360은 DAW를 따라감)."
+      ],
+      "symptoms": [
+        {
+          "증상": "방송에 마이크 소리가 아예 안 나감",
+          "원인": "LOOPBACK SOURCE가 'Loopback Off'이거나 OBS 장치가 Loopback 입력이 아님",
+          "해결": "LOOPBACK SOURCE를 Playback 1-2로, OBS 마이크 장치를 SSL 12 Loopback 입력으로"
+        },
+        {
+          "증상": "방송에 마이크가 에코/더블링으로 들림",
+          "원인": "루프백 소스가 버스(Monitor/HP)로 되어 생마이크가 섞임",
+          "해결": "LOOPBACK SOURCE를 Playback 1-2로 변경"
+        },
+        {
+          "증상": "소리는 나는데 안 나가거나 피치가 틀어짐",
+          "원인": "샘플레이트 불일치",
+          "해결": "SSL·REAPER·OBS 모두 48000"
+        },
+        {
+          "증상": "샘플레이트를 SSL 360에서 못 바꿈(회색)",
+          "원인": "DAW가 열려 있어 DAW 값을 따라가는 정상 동작",
+          "해결": "REAPER 쪽 샘플레이트를 48000으로 변경"
+        },
+        {
+          "증상": "Playback 1-2 미터가 안 뜸",
+          "원인": "REAPER 출력이 재생 1/2로 안 감, 또는 마이크 입력 문제",
+          "해결": "REAPER 출력 라우팅 1/2 확인, 마이크 게인·48V·케이블 확인"
+        },
+        {
+          "증상": "윈도우 업데이트 후 세팅이 풀림",
+          "원인": "프로필 미저장",
+          "해결": "SAVE/SAVE AS로 저장 후, 풀리면 PROFILE > LOAD로 복구"
+        }
+      ],
+      "manualUrl": "https://support.solidstatelogic.com/hc/en-gb/articles/5568765809309-SSL-12-User-Guide",
+      "guideImage": "ssl-12.png",
+      "status": "완료 (OBS 장치명만 현장 확인)",
+      "setupSteps": [
+        {
+          "step": 1,
+          "title": "소프트웨어·드라이버 설치",
+          "do": "제조사 공식 사이트에서 SSL 360°와 전용 ASIO 드라이버를 받아 설치하고 PC를 재시작합니다.",
+          "check": "장치 관리자와 윈도우 소리 설정에 기기 이름이 보이면 통과.",
+          "warn": "ASIO4ALL은 쓰지 않습니다. 반드시 이 기기 전용 ASIO를 씁니다."
+        },
+        {
+          "step": 2,
+          "title": "샘플레이트를 48000으로 통일",
+          "do": "윈도우 소리 설정, SSL 360°, REAPER, OBS 네 곳을 모두 48000으로 맞춥니다.",
+          "where": "윈도우: 설정→시스템→소리→장치 속성→고급 / OBS: 설정→오디오→샘플레이트 / REAPER: 옵션→환경설정→오디오→장치",
+          "check": "네 곳의 숫자가 모두 같으면 통과.",
+          "warn": "OBS 기본값이 48kHz입니다. DAW가 열려 있으면 SSL 360°의 샘플레이트 칸이 회색으로 잠기고 DAW를 따라가므로, 그때는 REAPER 쪽을 바꿉니다."
+        },
+        {
+          "step": 3,
+          "title": "마이크 연결과 게인",
+          "do": "마이크를 SSL 12의 마이크 입력에 꽂고, 콘덴서 마이크면 48V를 켠 뒤 게인을 올립니다.",
+          "check": "말할 때 입력 미터가 −18 ~ −12 dB 근처에서 움직이면 적당합니다.",
+          "warn": "페이더·노브의 0.0은 '꺼짐'이 아니라 유니티(그대로 통과)입니다. 진짜 끄기는 −∞."
+        },
+        {
+          "step": 4,
+          "title": "REAPER 오디오 장치 설정",
+          "do": "REAPER 옵션→환경설정→오디오→장치에서 이 기기의 전용 ASIO를 선택합니다.",
+          "check": "REAPER 하단에 장치 이름이 뜨고 입력 트랙 미터가 움직이면 통과."
+        },
+        {
+          "step": 5,
+          "title": "REAPER 보컬 체인 구성",
+          "do": "마이크 트랙에 AutoTune → 윤슬 Clean → DeEss → 윤슬 Tone → Limiter 순서로 겁니다.",
+          "check": "헤드폰으로 들었을 때 처리된 목소리가 들리면 통과."
+        },
+        {
+          "step": 6,
+          "title": "REAPER 출력을 재생 1/2로",
+          "do": "마이크 트랙의 출력(하드웨어 아웃)을 1/2로 보냅니다. 나머지 채널로 새지 않게 합니다.",
+          "check": "SSL 360°의 재생 1/2 미터가 말할 때 뛰면 통과. 이게 안 뛰면 아래 단계는 의미 없습니다.",
+          "warn": "여기서 미터가 안 뜨면 루프백을 아무리 만져도 소용없습니다. 반드시 먼저 해결하세요."
+        },
+        {
+          "step": 7,
+          "title": "LOOPBACK SOURCE = Playback 1-2",
+          "do": "오른쪽 CONTROL 패널 맨 아래 LOOPBACK SOURCE를 **Playback 1-2**로 지정합니다. SSL 12는 이 한 곳이면 끝입니다.",
+          "where": "SSL 360° Mixer 오른쪽 CONTROL 패널 맨 아래",
+          "check": "드롭다운이 Playback 1-2로 바뀌면 통과.",
+          "warn": "기본이 'Loopback Off'(꺼짐)입니다. 꺼져 있으면 마이크가 방송에 안 나갑니다."
+        },
+        {
+          "step": 8,
+          "title": "OBS 마이크 장치 지정",
+          "do": "OBS에서 마이크 소스의 장치를 **SSL 12의 Loopback 입력**로 지정합니다.",
+          "where": "OBS: 설정→오디오, 또는 소스 목록의 오디오 입력 캡처",
+          "check": "OBS 오디오 믹서에서 말할 때 미터가 뛰면 통과.",
+          "warn": "크롬·디스코드는 OBS에서 소스별로 따로 잡습니다. 루프백에는 마이크만 들어갑니다."
+        },
+        {
+          "step": 9,
+          "title": "최종 확인 — 녹화 테스트",
+          "do": "OBS로 30초 녹화한 뒤 재생해서 ① 목소리가 들리는지 ② 에코·더블링이 없는지 ③ 크롬·디스코드가 따로 조절되는지 확인합니다.",
+          "check": "세 가지가 모두 정상이면 완료입니다.",
+          "warn": "목소리가 두 번 들리면 루프백 소스가 잘못된 것입니다. 루프백 단계로 돌아가세요."
+        },
+        {
+          "step": 10,
+          "title": "설정 저장",
+          "do": "왼쪽 PROFILE에서 **SAVE**(덮어쓰기) 또는 **SAVE AS**(새 이름)로 저장합니다.",
+          "check": "프로필 이름 옆의 별표(*)가 사라지면 저장된 것입니다.",
+          "warn": "별표는 저장되지 않은 변경이 있다는 뜻입니다."
+        }
+      ]
+    },
+    "lewitt-connect6": {
+      "id": "lewitt-connect6",
+      "name": "Lewitt CONNECT 6",
+      "aliases": [
+        "Connect 6",
+        "커넥트6",
+        "커넥트 6",
+        "레윗 커넥트6",
+        "LEWITT Connect6",
+        "connect6"
+      ],
+      "software": "LEWITT CONTROL CENTER",
+      "type": {
+        "code": "A",
+        "label": "직결형",
+        "cleaning": false
+      },
+      "oneLiner": "Loopback 드롭다운 하나로 끝나는 직결형. USB-C 포트가 2개라 두 번째 포트로 게임컴을 디지털 연결할 수 있는 유일한 기기 — 투컴 고객 1순위 추천.",
+      "twoPcCapable": true,
+      "coreSettings": [
+        {
+          "n": 2,
+          "control": "Loopback",
+          "위치": "화면 아래 가운데 'Loopback' 섹션의 드롭다운",
+          "값": "Out 1/2",
+          "이유": "루프백이 잡을 소스를 Out 1/2(=재생 1/2=MIC)로 지정. 방송에 나가는 마이크 소리를 결정하는 단 한 곳이며 이것만으로 완성된다.",
+          "경고": "Mix A·Mix B는 헤드폰용 모니터 믹스다. 여기로 두면 생마이크가 섞여 에코·더블링이 난다.",
+          "메모": "공식 홍보 화면이 이미 Out 1/2로 되어 있다 — 그 상태가 정답."
+        }
+      ],
+      "checks": [
+        {
+          "n": 1,
+          "point": "Out 1/2 미터 = MIC",
+          "정상": "말할 때 Software Channels의 Out 1/2 미터가 뛴다.",
+          "비정상시": "REAPER 출력이 1/2로 나가는지, 마이크 게인·48V·케이블 확인."
+        },
+        {
+          "n": 3,
+          "point": "Sample Rate = 48 kHz",
+          "위치": "오른쪽 위 헤더",
+          "정상": "인터페이스·REAPER·OBS 세 곳 모두 48000.",
+          "비정상시": "하나만 달라도 무음 또는 피치 오류."
+        }
+      ],
+      "save": {
+        "n": 4,
+        "위치": "왼쪽 위 Preset 드롭다운",
+        "동작": "현재 설정을 이름 붙여 저장. 세팅이 풀리면 여기서 통째로 복구.",
+        "주의": "저장 항목이 드롭다운 안에 있는 버전과 오른쪽 톱니바퀴 아이콘에 있는 버전이 있다 — 두 곳 다 확인."
+      },
+      "channelLayout": {
+        "Out 1/2": "마이크(MIC) — 루프백 소스",
+        "Out 3/4": "크롬(MR·반주)",
+        "Out 5/6": "디스코드 등",
+        "메모": "소프트웨어 채널이 정확히 3쌍이라 윤슬 표준 배치와 딱 맞는다.",
+        "MixA_MixB": "헤드폰용 모니터 믹스 2개. 각 채널 아래 A/B 버튼으로 보낸다. 방송 송출과 무관하므로 고객이 자유롭게 조절해도 된다."
+      },
+      "twoPc": {
+        "포트배치": "Computer 포트 = 송출컴(OBS·REAPER가 있는 쪽) / Mobile 포트 = 게임컴",
+        "MobileIn": "Hardware Inputs의 'Mobile In' 칸. 게임컴에서 오는 소리가 여기로 들어온다. 헤드폰 모니터와 OBS에 쓴다.",
+        "MobileOut": "Hardware Outputs의 'Mobile Out' 드롭다운. 게임컴으로 돌려보낼 소리를 고른다. Out 1/2(=마이크)로 두면 게임컴의 디스코드가 REAPER를 거친 방송용 목소리를 그대로 쓴다.",
+        "장점": "아날로그 케이블이 없어 노이즈·그라운드 루프가 원천 차단된다.",
+        "제약": "두 번째 포트는 스테레오 2채널. 다채널 분리는 안 된다.",
+        "디스코드해결": "투컴에서 늘 골치인 '디스코드 마이크' 문제를 Mobile Out 한 칸으로 해결한다."
+      },
+      "obsDevice": "Connect 6의 Loopback 입력",
+      "obsDeviceStatus": "현장 확인 필요 — OBS에서 잡히는 실제 장치·채널명 확인 후 확정.",
+      "pitfalls": [
+        "Loopback 소스를 Mix A/B로 두지 말 것 — 모니터 믹스라 생마이크가 섞여 더블링.",
+        "Input 1/2의 Expander·Compressor·Equalizer가 켜져 있으면 REAPER 보컬 체인과 이중 처리된다. 필요 없으면 끈다.",
+        "샘플레이트 48000 일치(인터페이스·REAPER·OBS)."
+      ],
+      "symptoms": [
+        {
+          "증상": "방송에 마이크 소리가 아예 안 나감",
+          "원인": "Loopback 드롭다운이 Out 1/2가 아니거나 OBS 장치가 Loopback 입력이 아님",
+          "해결": "Loopback = Out 1/2, OBS 마이크 장치를 Connect 6 Loopback 입력으로"
+        },
+        {
+          "증상": "방송에 마이크가 에코·더블링",
+          "원인": "Loopback 소스가 Mix A/B(모니터 믹스)로 지정됨",
+          "해결": "Loopback을 Out 1/2로 변경"
+        },
+        {
+          "증상": "목소리가 과하게 눌리거나 이상하게 들림",
+          "원인": "Input의 Expander·Compressor·EQ가 켜져 있어 REAPER 체인과 이중 처리",
+          "해결": "Control Center의 Input DSP를 끄고 REAPER 체인만 사용"
+        },
+        {
+          "증상": "소리는 나는데 안 나가거나 피치가 틀어짐",
+          "원인": "샘플레이트 불일치",
+          "해결": "Connect 6·REAPER·OBS 모두 48000"
+        },
+        {
+          "증상": "(투컴) 게임 소리가 안 들림",
+          "원인": "Mobile 포트에 게임컴이 연결되지 않았거나 Mobile In 페이더가 내려감",
+          "해결": "두 번째 USB-C에 게임컴 연결 확인, Mobile In 페이더와 Mix 전송(A/B) 확인"
+        },
+        {
+          "증상": "(투컴) 게임컴 디스코드에서 내 목소리가 안 나감",
+          "원인": "Mobile Out이 Out 1/2로 지정되지 않음",
+          "해결": "Mobile Out = Out 1/2 로 지정"
+        },
+        {
+          "증상": "윈도우 업데이트 후 세팅이 풀림",
+          "원인": "프리셋 미저장",
+          "해결": "Preset으로 저장해두고 풀리면 불러오기"
+        }
+      ],
+      "manualUrl": "https://www.lewitt-audio.com/support/online-guides/connect6",
+      "guideImage": "lewitt-connect6.png",
+      "status": "완료 (OBS 장치명만 현장 확인)",
+      "setupSteps": [
+        {
+          "step": 1,
+          "title": "소프트웨어·드라이버 설치",
+          "do": "제조사 공식 사이트에서 CONTROL CENTER와 전용 ASIO 드라이버를 받아 설치하고 PC를 재시작합니다.",
+          "check": "장치 관리자와 윈도우 소리 설정에 기기 이름이 보이면 통과.",
+          "warn": "ASIO4ALL은 쓰지 않습니다. 반드시 이 기기 전용 ASIO를 씁니다."
+        },
+        {
+          "step": 2,
+          "title": "샘플레이트를 48000으로 통일",
+          "do": "윈도우 소리 설정, CONTROL CENTER, REAPER, OBS 네 곳을 모두 48000으로 맞춥니다.",
+          "where": "윈도우: 설정→시스템→소리→장치 속성→고급 / OBS: 설정→오디오→샘플레이트 / REAPER: 옵션→환경설정→오디오→장치",
+          "check": "네 곳의 숫자가 모두 같으면 통과.",
+          "warn": "OBS 기본값이 48kHz입니다. 화면 오른쪽 위 Sample Rate에서 확인합니다."
+        },
+        {
+          "step": 3,
+          "title": "마이크 연결과 게인",
+          "do": "마이크를 Input 1에 꽂고, 콘덴서 마이크면 48V를 켠 뒤 게인을 올립니다. **Expander·Compressor·Equalizer는 끕니다** — REAPER 체인과 이중 처리됩니다.",
+          "check": "말할 때 입력 미터가 −18 ~ −12 dB 근처에서 움직이면 적당합니다.",
+          "warn": "페이더·노브의 0.0은 '꺼짐'이 아니라 유니티(그대로 통과)입니다. 진짜 끄기는 −∞."
+        },
+        {
+          "step": 4,
+          "title": "REAPER 오디오 장치 설정",
+          "do": "REAPER 옵션→환경설정→오디오→장치에서 이 기기의 전용 ASIO를 선택합니다.",
+          "check": "REAPER 하단에 장치 이름이 뜨고 입력 트랙 미터가 움직이면 통과."
+        },
+        {
+          "step": 5,
+          "title": "REAPER 보컬 체인 구성",
+          "do": "마이크 트랙에 AutoTune → 윤슬 Clean → DeEss → 윤슬 Tone → Limiter 순서로 겁니다.",
+          "check": "헤드폰으로 들었을 때 처리된 목소리가 들리면 통과."
+        },
+        {
+          "step": 6,
+          "title": "REAPER 출력을 재생 1/2로",
+          "do": "마이크 트랙의 출력(하드웨어 아웃)을 1/2로 보냅니다. 나머지 채널로 새지 않게 합니다.",
+          "check": "CONTROL CENTER의 재생 1/2 미터가 말할 때 뛰면 통과. 이게 안 뛰면 아래 단계는 의미 없습니다.",
+          "warn": "여기서 미터가 안 뜨면 루프백을 아무리 만져도 소용없습니다. 반드시 먼저 해결하세요."
+        },
+        {
+          "step": 7,
+          "title": "Loopback = Out 1/2",
+          "do": "화면 아래 가운데 Loopback 섹션의 드롭다운을 **Out 1/2**로 지정합니다.",
+          "where": "CONTROL CENTER 하단 Loopback 섹션",
+          "check": "드롭다운이 Out 1/2이면 통과. 기본값이 이미 Out 1/2인 경우가 많습니다.",
+          "warn": "Mix A·Mix B는 헤드폰용 모니터 믹스입니다. 여기로 두면 생마이크가 섞여 더블링이 납니다."
+        },
+        {
+          "step": 8,
+          "title": "OBS 마이크 장치 지정",
+          "do": "OBS에서 마이크 소스의 장치를 **Connect 6의 Loopback 입력**로 지정합니다.",
+          "where": "OBS: 설정→오디오, 또는 소스 목록의 오디오 입력 캡처",
+          "check": "OBS 오디오 믹서에서 말할 때 미터가 뛰면 통과.",
+          "warn": "크롬·디스코드는 OBS에서 소스별로 따로 잡습니다. 루프백에는 마이크만 들어갑니다."
+        },
+        {
+          "step": 9,
+          "title": "최종 확인 — 녹화 테스트",
+          "do": "OBS로 30초 녹화한 뒤 재생해서 ① 목소리가 들리는지 ② 에코·더블링이 없는지 ③ 크롬·디스코드가 따로 조절되는지 확인합니다.",
+          "check": "세 가지가 모두 정상이면 완료입니다.",
+          "warn": "목소리가 두 번 들리면 루프백 소스가 잘못된 것입니다. 루프백 단계로 돌아가세요."
+        },
+        {
+          "step": 10,
+          "title": "설정 저장",
+          "do": "왼쪽 위 **Preset**에서 이름을 붙여 저장합니다.",
+          "check": "프리셋 목록에 이름이 보이면 통과.",
+          "warn": "저장 항목이 드롭다운 안에 있는 버전과 오른쪽 톱니바퀴에 있는 버전이 있습니다 — 두 곳 다 확인하세요."
+        }
+      ]
+    },
+    "topping-m62": {
+      "id": "topping-m62",
+      "name": "TOPPING M62",
+      "aliases": [
+        "M62",
+        "토핑 M62",
+        "토핑M62",
+        "Topping M62",
+        "M Control Center"
+      ],
+      "software": "M Control Center",
+      "type": {
+        "code": "A",
+        "label": "직결형",
+        "cleaning": false
+      },
+      "oneLiner": "전용 Loopback 섹션에서 소스를 지정하는 직결형. 단 ★모드를 먼저 맞춰야 한다★ — Mobile 모드에는 믹서도 루프백도 없다.",
+      "★선행조건": {
+        "n": 1,
+        "control": "동작 모드",
+        "값": "Live Streaming 모드 (또는 Pro Audio)",
+        "이유": "M62는 Mobile / Live Streaming / Pro Audio 세 모드로 동작하는데, Mobile 모드에는 믹서가 없고 루프백 섹션도 없다. 고객이 Mobile 모드면 아무리 설정을 찾아도 루프백이 나오지 않는다.",
+        "진단": "'루프백 섹션이 안 보여요' → 십중팔구 Mobile 모드다. 모드부터 확인시킬 것.",
+        "모드별차이": "Mobile: 믹서 없음·44.1/48 / Live Streaming: 믹서 A~E 5개·44.1/48·이펙트 있음 / Pro Audio: 믹서 A~C 3개·최대 96kHz·이펙트 없음"
+      },
+      "coreSettings": [
+        {
+          "n": 2,
+          "control": "Loopback 1/2 소스",
+          "위치": "Live Streaming(또는 Pro Audio) 모드 **메인 화면 안의 패널**. 메인 화면은 왼쪽부터 Input → Mixer → Effects → **Loopback** → Output 순서의 5개 섹션으로 되어 있고, Loopback은 오른쪽에서 두 번째다. 별도로 열리는 팝업 창이 아니다.",
+          "값": "Playback 1/2",
+          "이유": "루프백이 잡을 소스를 재생 1/2(=MIC)로 지정. 방송에 나가는 마이크 소리를 결정하는 단 한 곳.",
+          "경고": "소스로 '믹서 출력(Mix A~E)'도 고를 수 있다. 믹서로 두면 생마이크가 섞여 에코·더블링이 난다. 반드시 Playback 1/2로.",
+          "메모": "루프백 채널이 Loopback 1/2, 3/4, 5/6, 7/8 로 여러 개다. 우리는 1/2만 쓴다.",
+          "조작": "드롭다운 → Playback ▸ → Playback 1/2. (드롭다운 선택지는 Mixer / Input / Playback / Effect 네 갈래)",
+          "기본값주의": "공식 그림 기준 기본이 Mix A(믹서 출력) — 우리 표준이 금지하는 설정이므로 반드시 바꿔야 한다."
+        }
+      ],
+      "★함정_Ducking": {
+        "무엇": "M62에는 Ducking(자동 감쇄) 기능이 있다. IN1/IN2(마이크) 소리가 감지되면 Ducking Map에서 지정한 채널의 볼륨을 자동으로 낮춘다.",
+        "왜위험": "우리 표준에서 Playback 1/2는 'REAPER를 거쳐 돌아온 마이크'다. Ducking Map에서 Playback 1/2가 켜져 있으면, 말할 때마다 마이크가 자기 자신을 깎는다 → 방송에서 목소리가 들쭉날쭉 펌핑된다.",
+        "반드시": "Ducking Map에서 **Playback 1/2는 IN1·IN2 둘 다 해제**한다.",
+        "괜찮은것": "Playback 3/4(크롬)·5/6(디스코드)의 덕킹은 헤드폰 모니터에만 영향을 준다. 이 소스들은 OBS에서 PC 앱으로 따로 잡으므로 방송 송출과 무관하다. 고객이 원하면 켜도 된다.",
+        "확인수준": "공식 매뉴얼의 Ducking 정의(‘IN1/IN2 감지 시 지정 채널 볼륨을 낮춤’)에서 도출한 논리적 결론. 실기 확인 권장.",
+        "발견경위": "고객이 보내온 Ducking 화면에서 Playback 1/2가 IN2로 덕킹되도록 켜져 있는 상태를 발견."
+      },
+      "checks": [
+        {
+          "n": 3,
+          "point": "Playback 1/2 미터 = MIC",
+          "정상": "말할 때 Playback 1/2 미터가 뛴다.",
+          "비정상시": "REAPER 출력이 1/2로 나가는지, 마이크 게인·48V·케이블 확인."
+        },
+        {
+          "n": 4,
+          "point": "샘플레이트 = 48 kHz",
+          "위치": "Settings → ASIO Settings",
+          "정상": "인터페이스·REAPER·OBS 모두 48000.",
+          "제약": "Live Streaming 모드는 44.1/48만 지원(48 사용 가능). Pro Audio 모드는 96kHz까지. OTG(폰) 연결은 48kHz 고정."
+        }
+      ],
+      "save": {
+        "n": 5,
+        "위치": "상단 컨트롤 바의 Workspace",
+        "동작": "Workspace로 현재 설정 저장 / 기기에 다운로드하면 PC 없이도 유지 / 내보내기·불러오기로 공유 가능.",
+        "추가": "모드별로 User 1 · User 2 프리셋 2개를 따로 저장할 수 있다(기기 버튼으로도 호출)."
+      },
+      "channelLayout": {
+        "Playback 1/2": "마이크(MIC) — 루프백 소스",
+        "Playback 3/4": "크롬(MR·반주)",
+        "Playback 5/6~": "디스코드 등",
+        "하드웨어입력": "IN1, IN2(48V), AUX(3.5mm), BT(블루투스), OTG IN",
+        "메모": "모드에 따라 Playback 1/2 ~ 9/10 까지 사용 가능. 녹음 채널 16 / DAW 채널 10."
+      },
+      "dualHost": {
+        "가능": "OTG 포트와 USB-C 포트에 각각 다른 기기를 동시에 연결할 수 있다(듀얼 호스트).",
+        "공식용도": "매뉴얼상 용도는 '폰 + 컴퓨터'.",
+        "투컴가능성": "OTG에 두 번째 PC를 물리는 방식이 되는지는 매뉴얼에 명시가 없다 — 미검증. 투컴 확정 추천은 Lewitt Connect 6 쪽이 안전하다.",
+        "제약": "OTG는 48kHz 고정."
+      },
+      "obsDevice": "M62의 Loopback 1/2 입력",
+      "obsDeviceStatus": "현장 확인 필요 — OBS에서 잡히는 실제 장치·채널명 확인 후 확정.",
+      "pitfalls": [
+        "★ Mobile 모드에서는 믹서·루프백이 아예 없다. Live Streaming(또는 Pro Audio) 모드인지 먼저 확인.",
+        "★ Ducking Map에서 Playback 1/2를 해제할 것 — 켜져 있으면 마이크가 자기를 덕킹해 목소리가 펌핑된다.",
+        "루프백 소스를 믹서 출력(Mix A~E)으로 두지 말 것 — 생마이크 더블링.",
+        "OBS가 Loopback 3/4·5/6 같은 엉뚱한 루프백 채널을 잡지 않았는지 확인.",
+        "샘플레이트 48000 일치(인터페이스·REAPER·OBS)."
+      ],
+      "symptoms": [
+        {
+          "증상": "루프백 섹션이 화면에 안 보임",
+          "원인": "Mobile 모드로 동작 중(믹서·루프백 없음)",
+          "해결": "Live Streaming 또는 Pro Audio 모드로 전환"
+        },
+        {
+          "증상": "Loopback 섹션을 아무리 찾아도 안 보임",
+          "원인": "별도 팝업 창으로 열리는 줄 알고 찾는 경우. Loopback은 메인 화면 안의 패널이다(왼쪽부터 4번째, Effects와 Output 사이).",
+          "해결": "Live Streaming 모드인지 먼저 확인 → 메인 화면 오른쪽에서 두 번째 패널을 볼 것. 공식 가이드 29쪽에 그림 있음."
+        },
+        {
+          "증상": "손대지 않았는데 처음부터 목소리가 두 번 들림",
+          "원인": "M62는 루프백 소스 기본값이 Mix A(믹서 출력)일 가능성이 높다. 믹서 출력에는 생마이크가 섞여 있다.",
+          "해결": "Loopback 1/2 드롭다운 → Playback ▸ → Playback 1/2 로 변경"
+        },
+        {
+          "증상": "말할 때마다 내 목소리가 커졌다 작아졌다 함(펌핑)",
+          "원인": "Ducking Map에 Playback 1/2가 켜져 있어 마이크가 자기를 덕킹",
+          "해결": "Ducking Map에서 Playback 1/2의 IN1·IN2 모두 해제"
+        },
+        {
+          "증상": "방송에 마이크가 에코·더블링",
+          "원인": "루프백 소스가 믹서 출력(Mix A~E)으로 지정됨",
+          "해결": "Loopback 1/2 소스를 Playback 1/2로 변경"
+        },
+        {
+          "증상": "방송에 마이크 소리가 아예 안 나감",
+          "원인": "루프백 소스 미지정 또는 OBS가 다른 루프백 채널을 잡음",
+          "해결": "Loopback 1/2 = Playback 1/2, OBS 마이크 장치 = Loopback 1/2"
+        },
+        {
+          "증상": "소리는 나는데 안 나가거나 피치가 틀어짐",
+          "원인": "샘플레이트 불일치",
+          "해결": "M62·REAPER·OBS 모두 48000"
+        },
+        {
+          "증상": "PC를 껐다 켜면 세팅이 풀림",
+          "원인": "Workspace를 기기에 저장하지 않음",
+          "해결": "Workspace 저장 후 '기기에 다운로드'까지 실행"
+        }
+      ],
+      "manualUrl": "https://download.topping.pro/downloads/M62-EN_V1.1.pdf",
+      "softwareGuideUrl": "https://download.topping.pro/downloads/M_Control_Center-EN_V1.1.pdf",
+      "guideImage": "topping-m62.png",
+      "status": "완료 (OBS 장치명·Mix A 기본값만 현장 확인)",
+      "setupSteps": [
+        {
+          "step": 1,
+          "title": "★ 동작 모드를 Live Streaming으로",
+          "do": "M Control Center에서 동작 모드를 **Live Streaming**(또는 Pro Audio)으로 바꿉니다.",
+          "where": "M Control Center 모드 선택",
+          "check": "화면에 믹서와 Loopback 섹션이 보이면 통과.",
+          "warn": "Mobile 모드에는 믹서도 루프백도 아예 없습니다. '루프백이 안 보여요'의 대부분이 이 문제입니다."
+        },
+        {
+          "step": 2,
+          "title": "소프트웨어·드라이버 설치",
+          "do": "제조사 공식 사이트에서 M Control Center와 전용 ASIO 드라이버를 받아 설치하고 PC를 재시작합니다.",
+          "check": "장치 관리자와 윈도우 소리 설정에 기기 이름이 보이면 통과.",
+          "warn": "ASIO4ALL은 쓰지 않습니다. 반드시 이 기기 전용 ASIO를 씁니다."
+        },
+        {
+          "step": 3,
+          "title": "샘플레이트를 48000으로 통일",
+          "do": "윈도우 소리 설정, M Control Center, REAPER, OBS 네 곳을 모두 48000으로 맞춥니다.",
+          "where": "윈도우: 설정→시스템→소리→장치 속성→고급 / OBS: 설정→오디오→샘플레이트 / REAPER: 옵션→환경설정→오디오→장치",
+          "check": "네 곳의 숫자가 모두 같으면 통과.",
+          "warn": "Live Streaming 모드는 44.1/48만 지원하므로 48000을 씁니다."
+        },
+        {
+          "step": 4,
+          "title": "마이크 연결과 게인",
+          "do": "마이크를 IN1 또는 IN2에 꽂고, 콘덴서 마이크면 48V를 켠 뒤 게인을 올립니다.",
+          "check": "말할 때 입력 미터가 −18 ~ −12 dB 근처에서 움직이면 적당합니다.",
+          "warn": "페이더·노브의 0.0은 '꺼짐'이 아니라 유니티(그대로 통과)입니다. 진짜 끄기는 −∞."
+        },
+        {
+          "step": 5,
+          "title": "REAPER 오디오 장치 설정",
+          "do": "REAPER 옵션→환경설정→오디오→장치에서 이 기기의 전용 ASIO를 선택합니다.",
+          "check": "REAPER 하단에 장치 이름이 뜨고 입력 트랙 미터가 움직이면 통과."
+        },
+        {
+          "step": 6,
+          "title": "REAPER 보컬 체인 구성",
+          "do": "마이크 트랙에 AutoTune → 윤슬 Clean → DeEss → 윤슬 Tone → Limiter 순서로 겁니다.",
+          "check": "헤드폰으로 들었을 때 처리된 목소리가 들리면 통과."
+        },
+        {
+          "step": 7,
+          "title": "REAPER 출력을 재생 1/2로",
+          "do": "마이크 트랙의 출력(하드웨어 아웃)을 1/2로 보냅니다. 나머지 채널로 새지 않게 합니다.",
+          "check": "M Control Center의 재생 1/2 미터가 말할 때 뛰면 통과. 이게 안 뛰면 아래 단계는 의미 없습니다.",
+          "warn": "여기서 미터가 안 뜨면 루프백을 아무리 만져도 소용없습니다. 반드시 먼저 해결하세요."
+        },
+        {
+          "step": 8,
+          "title": "Loopback 1/2 소스 = Playback 1/2",
+          "do": "Loopback 섹션에서 **Loopback 1/2 위의 드롭다운**을 클릭하고 **Playback ▸ → Playback 1/2**을 고릅니다. (드롭다운은 Mixer / Input / Playback / Effect 네 갈래로 갈라집니다)",
+          "where": "Live Streaming(또는 Pro Audio) 모드 **메인 화면 안의 패널**. 메인 화면은 왼쪽부터 Input → Mixer → Effects → **Loopback** → Output 순서의 5개 섹션으로 되어 있고, Loopback은 오른쪽에서 두 번째다. 별도로 열리는 팝업 창이 아니다.",
+          "check": "Loopback 1/2 드롭다운에 Playback 1/2이 표시되면 통과.",
+          "warn": "★기본값이 **Mix A**(믹서 출력)인 경우가 많습니다 — 믹서 출력에는 생마이크가 섞여 있어 그대로 두면 에코·더블링이 납니다. 반드시 Playback 1/2로 바꾸세요. · Loopback 3/4·5/6·7/8은 건드리지 않아도 됩니다."
+        },
+        {
+          "step": 9,
+          "title": "★ Ducking Map에서 Playback 1/2 해제",
+          "do": "Ducking 창의 Ducking Map에서 **Playback 1/2의 IN1·IN2를 모두 끕니다**.",
+          "where": "M Control Center → Ducking",
+          "check": "Playback 1/2 행의 두 점이 모두 꺼져 있으면 통과.",
+          "warn": "Playback 1/2는 REAPER를 거쳐 돌아온 마이크입니다. 여기가 켜져 있으면 말할 때마다 마이크가 자기를 깎아 목소리가 펌핑됩니다. Playback 3/4·5/6의 덕킹은 헤드폰에만 영향을 주므로 켜도 됩니다."
+        },
+        {
+          "step": 10,
+          "title": "OBS 마이크 장치 지정",
+          "do": "OBS에서 마이크 소스의 장치를 **M62의 Loopback 1/2 입력**로 지정합니다.",
+          "where": "OBS: 설정→오디오, 또는 소스 목록의 오디오 입력 캡처",
+          "check": "OBS 오디오 믹서에서 말할 때 미터가 뛰면 통과.",
+          "warn": "크롬·디스코드는 OBS에서 소스별로 따로 잡습니다. 루프백에는 마이크만 들어갑니다."
+        },
+        {
+          "step": 11,
+          "title": "최종 확인 — 녹화 테스트",
+          "do": "OBS로 30초 녹화한 뒤 재생해서 ① 목소리가 들리는지 ② 에코·더블링이 없는지 ③ 크롬·디스코드가 따로 조절되는지 확인합니다.",
+          "check": "세 가지가 모두 정상이면 완료입니다.",
+          "warn": "목소리가 두 번 들리면 루프백 소스가 잘못된 것입니다. 루프백 단계로 돌아가세요."
+        },
+        {
+          "step": 12,
+          "title": "설정 저장",
+          "do": "상단 Workspace로 저장한 뒤 **'기기에 다운로드'**까지 실행합니다.",
+          "check": "PC를 껐다 켜도 설정이 유지되면 통과.",
+          "warn": "Workspace를 기기에 내려보내지 않으면 PC 재부팅 시 풀릴 수 있습니다."
+        }
+      ],
+      "★화면위치": {
+        "Loopback섹션": "Live Streaming(또는 Pro Audio) 모드 **메인 화면 안의 패널**. 메인 화면은 왼쪽부터 Input → Mixer → Effects → **Loopback** → Output 순서의 5개 섹션으로 되어 있고, Loopback은 오른쪽에서 두 번째다. 별도로 열리는 팝업 창이 아니다.",
+        "왜못찾나": "EQ·Ducking·Noise Reduction·Compressor·Reverb는 팝업 창으로 따로 열리지만, Loopback은 메인 화면에 붙어 있는 패널이다. '루프백 창'을 찾으면 영원히 안 나온다.",
+        "공식그림": "M Control Center Reference Guide V1.1 29쪽에 Loopback Section 그림이 있다. (Input 21쪽 · Mixer 24쪽 · Effects 27쪽 · Loopback 29쪽 · Output 30쪽)",
+        "캡처요령": "주석 가이드용 캡처는 팝업이 아니라 **메인 화면 전체**를 찍어야 한다.",
+        "매뉴얼충돌": "M62 하드웨어 매뉴얼에는 '루프백은 하드웨어 모드로 설정된다'는 취지의 서술이 있어 소프트웨어 설정이 없는 것처럼 읽힌다. 소프트웨어 UI 기준은 M Control Center 가이드(29쪽)가 정확하다."
+      },
+      "★루프백조작": {
+        "섹션구성": "Loopback 섹션에는 Loopback 1/2 · 3/4 · 5/6 · 7/8 네 채널이 나란히 있고, 각 채널 위에 소스 드롭다운이 하나씩 있다. 우리는 Loopback 1/2만 쓴다.",
+        "드롭다운구조": "소스 드롭다운은 4개의 하위 메뉴로 갈라진다 — Mixer ▸ / Input ▸ / Playback ▸ / Effect ▸.",
+        "클릭경로": "Loopback 1/2 위의 드롭다운 클릭 → **Playback ▸** → **Playback 1/2** 선택.",
+        "★기본값경고": "공식 가이드 그림에서 네 개 루프백 채널이 전부 **Mix A**(믹서 출력)로 되어 있다. Mix A는 우리 표준이 금지하는 바로 그 설정 — 생마이크가 섞여 에코·더블링이 난다. 즉 M62는 손대지 않으면 위험한 쪽이 기본일 가능성이 높다.",
+        "확인수준": "'Mix A가 공장 초기값인지'는 공식 그림에서 관찰한 것이라 실기 확인 권장. 다만 어느 경우든 Playback 1/2로 바꾸는 절차는 동일하다.",
+        "출력섹션": "같은 드롭다운 구조가 Output 섹션(HP · OTG OUT)에도 있다. OTG 기기를 연결하지 않으면 OTG OUT은 회색으로 비활성."
+      },
+      "guideNote": "주석 그림은 공식 M Control Center 가이드의 Loopback Section 도판 기준. 실기 캡처가 확보되면 교체 권장."
+    },
+    "audient-id14": {
+      "id": "audient-id14",
+      "name": "Audient iD14 MkII",
+      "aliases": [
+        "iD14",
+        "ID14",
+        "id14",
+        "아이디14",
+        "오디언트 iD14",
+        "Audient iD14",
+        "iD14 MkII",
+        "iD22",
+        "iD44"
+      ],
+      "software": "iD Mixer (Audient iD 소프트웨어)",
+      "type": {
+        "code": "B",
+        "label": "믹스 경유형",
+        "cleaning": true
+      },
+      "oneLiner": "루프백 소스로 '믹스(CUE B)'를 지정하는 방식(유형 B). 그 믹스 안을 청소해야 하므로 직결형보다 손이 한 번 더 간다.",
+      "★샘플레이트예외": {
+        "값": 44100,
+        "이유": "iD 시리즈는 48kHz에서 미터는 뜨는데 소리가 안 나가는 무음 버그 이력이 있다.",
+        "주의": "윤슬 표준의 48000 통일에서 유일하게 빠지는 기기. 대신 윈도우·iD·REAPER·OBS를 모두 44100으로 맞춰야 한다."
+      },
+      "coreSettings": [
+        {
+          "n": 1,
+          "control": "Set Loop-back Source",
+          "위치": "상단 Setup 메뉴 (일부 버전은 iD 아이콘 메뉴)",
+          "값": "CUE B",
+          "이유": "루프백이 잡을 소스를 CUE B 믹스로 지정.",
+          "주의": "Setup에 없으면 iD 아이콘 메뉴 쪽을 확인. 두 곳 다 봐야 한다."
+        },
+        {
+          "n": 2,
+          "control": "CUE B 믹스 청소",
+          "위치": "CUE B 탭",
+          "값": "DAW 1+2(MIC)만 올리고 나머지 전부 −∞",
+          "이유": "유형 B는 믹스 내용이 곧 방송 내용이다. 청소하지 않으면 섞인 것이 그대로 나간다.",
+          "경고": "★하드웨어 입력의 생마이크를 반드시 내릴 것★ — 이걸 놓치면 REAPER를 거친 목소리와 생목소리가 겹쳐 에코·더블링이 난다. iD14에서 가장 흔한 사고."
+        }
+      ],
+      "channelLayout": {
+        "DAW 1+2": "마이크(MIC) — 루프백에 넣을 유일한 소스",
+        "DAW 3+4": "크롬(MR·반주)",
+        "DAW 5+6~": "디스코드 등",
+        "메모": "CUE B에는 DAW 1+2만 올린다. 나머지는 헤드폰용 CUE A에서 듣는다."
+      },
+      "obsDevice": "Input 11+12 또는 Loopback 1+2",
+      "obsDeviceStatus": "공식 문서로 확정 (Audient 지원 문서: 'select either Input 11+12 or Loopback 1+2 in your audio software')",
+      "pitfalls": [
+        "★ 48kHz 무음 버그 — 반드시 44100.",
+        "★ CUE B에서 하드웨어 입력(생마이크)을 내리지 않으면 에코·더블링.",
+        "루프백 소스 항목이 Setup이 아니라 iD 아이콘 메뉴에 있는 버전이 있다.",
+        "페이더 0.0은 유니티(통과). 끄기는 −∞."
+      ],
+      "symptoms": [
+        {
+          "증상": "미터는 뜨는데 방송이 무음",
+          "원인": "48kHz 무음 버그",
+          "해결": "윈도우·iD·REAPER·OBS 모두 44100으로 통일"
+        },
+        {
+          "증상": "목소리가 두 번 들림(에코·더블링)",
+          "원인": "CUE B에 하드웨어 입력의 생마이크가 올라와 있음",
+          "해결": "CUE B에서 DAW 1+2만 남기고 나머지 전부 −∞"
+        },
+        {
+          "증상": "루프백 소스 설정을 못 찾겠음",
+          "원인": "버전에 따라 위치가 다름",
+          "해결": "상단 Setup 메뉴와 iD 아이콘 메뉴 두 곳을 다 확인"
+        },
+        {
+          "증상": "DAW 1+2 미터가 안 뜸",
+          "원인": "REAPER 출력이 1/2로 안 감",
+          "해결": "REAPER 출력 라우팅과 ASIO 장치 확인"
+        },
+        {
+          "증상": "루프백 설정 자체가 없음",
+          "원인": "iD14 MkI 모델. 루프백은 MkII 전용이다.",
+          "해결": "기기 세대를 확인. MkI면 하드웨어 루프백이 불가하므로 다른 방법을 상의해야 한다."
+        }
+      ],
+      "guideImage": null,
+      "status": "절차 확정(윤슬 검증) · 주석 그림 캡처 대기",
+      "setupSteps": [
+        {
+          "step": 1,
+          "title": "소프트웨어·드라이버 설치",
+          "do": "제조사 공식 사이트에서 iD Mixer와 전용 ASIO 드라이버를 받아 설치하고 PC를 재시작합니다.",
+          "check": "장치 관리자와 윈도우 소리 설정에 기기 이름이 보이면 통과.",
+          "warn": "ASIO4ALL은 쓰지 않습니다. 반드시 이 기기 전용 ASIO를 씁니다."
+        },
+        {
+          "step": 2,
+          "title": "샘플레이트를 44100으로 통일",
+          "do": "윈도우 소리 설정, iD Mixer, REAPER, OBS 네 곳을 모두 44100으로 맞춥니다.",
+          "where": "윈도우: 설정→시스템→소리→장치 속성→고급 / OBS: 설정→오디오→샘플레이트 / REAPER: 옵션→환경설정→오디오→장치",
+          "check": "네 곳의 숫자가 모두 같으면 통과.",
+          "warn": "★iD 시리즈는 48kHz에서 미터는 뜨는데 소리가 안 나가는 무음 버그가 있습니다. 그래서 iD14만 44100을 씁니다."
+        },
+        {
+          "step": 3,
+          "title": "마이크 연결과 게인",
+          "do": "마이크를 iD14 전면 입력에 꽂고, 콘덴서 마이크면 48V를 켠 뒤 게인을 올립니다.",
+          "check": "말할 때 입력 미터가 −18 ~ −12 dB 근처에서 움직이면 적당합니다.",
+          "warn": "페이더·노브의 0.0은 '꺼짐'이 아니라 유니티(그대로 통과)입니다. 진짜 끄기는 −∞."
+        },
+        {
+          "step": 4,
+          "title": "REAPER 오디오 장치 설정",
+          "do": "REAPER 옵션→환경설정→오디오→장치에서 이 기기의 전용 ASIO를 선택합니다.",
+          "check": "REAPER 하단에 장치 이름이 뜨고 입력 트랙 미터가 움직이면 통과."
+        },
+        {
+          "step": 5,
+          "title": "REAPER 보컬 체인 구성",
+          "do": "마이크 트랙에 AutoTune → 윤슬 Clean → DeEss → 윤슬 Tone → Limiter 순서로 겁니다.",
+          "check": "헤드폰으로 들었을 때 처리된 목소리가 들리면 통과."
+        },
+        {
+          "step": 6,
+          "title": "REAPER 출력을 재생 1/2로",
+          "do": "마이크 트랙의 출력(하드웨어 아웃)을 1/2로 보냅니다.",
+          "check": "iD Mixer의 재생 1/2 미터가 말할 때 뛰면 통과. 이게 안 뛰면 아래 단계는 의미 없습니다.",
+          "warn": "여기서 미터가 안 뜨면 루프백을 아무리 만져도 소용없습니다. 반드시 먼저 해결하세요."
+        },
+        {
+          "step": 7,
+          "title": "루프백 소스 = CUE B",
+          "do": "iD Mixer의 **Setup 메뉴 → Input Routing**에서 루프백 소스를 **CUE B**로 지정합니다.",
+          "where": "iD Mixer → Setup 메뉴 → Input Routing",
+          "check": "믹서 화면의 **LB 아이콘**이 CUE B에 표시되면 통과.",
+          "warn": "문서마다 'System Panel' · 'iD 메뉴'로도 불립니다. 같은 곳입니다."
+        },
+        {
+          "step": 8,
+          "title": "★ CUE B 믹스 청소",
+          "do": "CUE B 탭에 들어가 **DAW 1+2(MIC)만 올리고 나머지는 전부 −∞로 내립니다.**",
+          "where": "iD Mixer의 CUE B 탭",
+          "check": "CUE B에서 DAW 1+2만 소리가 올라와 있으면 통과.",
+          "warn": "★하드웨어 입력의 생마이크를 반드시 내리세요★ — 이걸 놓치면 REAPER를 거친 목소리와 생목소리가 겹쳐 에코·더블링이 납니다. iD14에서 가장 흔한 사고입니다."
+        },
+        {
+          "step": 9,
+          "title": "OBS 마이크 장치 지정",
+          "do": "OBS에서 마이크 소스의 장치를 **Input 11+12** 또는 **Loopback 1+2**로 지정합니다.",
+          "where": "OBS: 설정→오디오, 또는 소스 목록의 오디오 입력 캡처",
+          "check": "OBS 오디오 믹서에서 말할 때 미터가 뛰면 통과.",
+          "warn": "크롬·디스코드는 OBS에서 소스별로 따로 잡습니다. 루프백에는 마이크만 들어갑니다."
+        },
+        {
+          "step": 10,
+          "title": "최종 확인 — 녹화 테스트",
+          "do": "OBS로 30초 녹화한 뒤 재생해서 ① 목소리가 들리는지 ② 에코·더블링이 없는지 ③ 크롬·디스코드가 따로 조절되는지 확인합니다.",
+          "check": "세 가지가 모두 정상이면 완료입니다.",
+          "warn": "목소리가 두 번 들리면 루프백 소스가 잘못된 것입니다. 루프백 단계로 돌아가세요."
+        },
+        {
+          "step": 11,
+          "title": "설정 저장",
+          "do": "현재 믹서 설정을 저장해 둡니다.",
+          "check": "저장 후 소프트웨어를 껐다 켜도 CUE B 설정이 유지되면 통과."
+        }
+      ],
+      "manualUrl": "https://d9w4fhj63j193.cloudfront.net/2021/iD14MKII/English/iD14%20MKII%20Manual%20V1.3.pdf",
+      "loopbackDocUrl": "https://support.audient.com/hc/en-us/articles/360055049331-ID14-Loop-back-Setup",
+      "mk1ManualUrl": "https://support.audient.com/hc/en-us/articles/360058643592-iD14-MKI-Manual",
+      "★MkII전용": {
+        "사실": "Audient 공식 문서: 루프백은 **iD14 MkII에만** 있고 MkI에는 없다.",
+        "영향": "고객이 MkI를 쓰면 하드웨어 루프백 자체가 불가능하다. 기기부터 확인해야 한다.",
+        "사내메모충돌": "기존 앱 프롬프트에는 'Audient iD mk1: id14/22/44는 유사 루프백 가능'이라고 적혀 있었다. 공식 문서와 어긋나므로 윤슬 확인 필요.",
+        "확인질문": "MkI에서 쓰던 '유사 루프백'이 무엇이었는지 — 다른 우회 방법인지, MkII를 MkI로 착각한 것인지."
+      },
+      "★검토필요_직결가능성": {
+        "발견": "공식 문서상 루프백 소스로 고를 수 있는 항목은 **DAW 1+2 / DAW 3+4 / DAW 5+6 / Master Mix / Cue A / Cue B** 여섯 가지다.",
+        "의미": "**DAW 1+2를 직접 고를 수 있다.** 그렇다면 CUE B를 거치지 않고 DAW 1+2를 바로 지정하면 되고, 믹스 청소 단계가 통째로 필요 없어진다 — 즉 유형 B가 아니라 유형 A로 다룰 수 있다.",
+        "왜중요": "현재 절차에서 사고가 가장 많이 나는 지점이 'CUE B에서 하드웨어 생마이크 내리기'다. DAW 1+2 직결이면 그 위험이 사라진다.",
+        "주의": "기존 절차(CUE B)는 윤슬 검증 완료 항목이다. 펌웨어·소프트웨어 버전에 따라 DAW 1+2 선택지가 없었거나, 다른 이유로 CUE B를 택했을 수 있다.",
+        "상태": "미결 — 윤슬 확인 전까지 기존 CUE B 절차를 유지한다. 실기에서 DAW 1+2 선택지가 보이는지 확인하면 결론이 난다."
+      },
+      "소프트웨어위치": "루프백 소스는 iD 메뉴의 **System Panel**에서 고른다(공식 매뉴얼 34~35쪽 'Audio Loop-back').",
+      "★그림없음": "iD14 MkII 공식 매뉴얼에는 **iD Mixer 소프트웨어 스크린샷이 없다**(글 설명만 있음). 따라서 주석 가이드는 실기 캡처가 반드시 필요하다 — M62·Lewitt처럼 매뉴얼 도판으로 대체할 수 없다.",
+      "샘플레이트공식": "공식 지원: 44.1 / 48 / 88.2 / 96 kHz. 공식 문서에 48kHz 무음 버그 언급은 없다(윤슬 현장 경험 기반 항목).",
+      "★루프백소스위치": {
+        "정확한경로": "iD Mixer의 **Setup 메뉴 → Input Routing**에서 루프백 소스를 고른다.",
+        "문서별표기차이": "공식 문서마다 표기가 달라 혼란이 있었다 — 매뉴얼은 'System Panel', iD14 지원문서는 'iD 메뉴', 루프백 전용 문서는 'Setup 메뉴 → Input Routing'. 가장 구체적인 마지막 표기를 기준으로 삼는다.",
+        "LB아이콘": "믹서 화면에 작은 **LB(루프백) 아이콘**이 있어, 어느 믹스가 루프백 소스로 지정되어 있는지 표시한다. 실제 캡처(MASTER MIX 헤더 옆)에서도 확인됨.",
+        "소스선택지": "DAW 1+2 / DAW 3+4 / DAW 5+6 / Master Mix / Cue A / Cue B"
+      },
+      "★OBS채널번호": {
+        "iD14": "Input **11+12** 또는 Loopback 1+2 (iD14 전용 문서 기준)",
+        "상위기종": "iD44/iD48 등은 Input **21+22** 또는 Loopback 1+2 (루프백 공통 문서 기준)",
+        "주의": "기기마다 번호가 다르다. 채널 수가 많은 기종일수록 뒤 번호. 'Loopback 1+2'라는 이름으로 표시되면 번호와 무관하게 그것을 고르면 된다."
+      },
+      "이미지출처": {
+        "설명": "고객 실기 없이 주석 가이드를 만들 수 있는 공식 이미지 URL. 저작권상 사용 설명 목적 인용.",
+        "CUE믹스화면": "https://support.audient.com/hc/article_attachments/8046291617428/image3.png",
+        "InputRouting_mac": "https://support.audient.com/hc/article_attachments/8046291580564/image2.png",
+        "InputRouting_win": "https://support.audient.com/hc/article_attachments/8046322879892/image6.png",
+        "LB아이콘": "https://support.audient.com/hc/article_attachments/8046291570964/image1.png",
+        "출처문서": "https://support.audient.com/hc/en-us/articles/8046381593748-How-do-I-Setup-Loop-back"
+      }
+    },
+    "rme-totalmix": {
+      "id": "rme-totalmix",
+      "name": "RME (TotalMix FX)",
+      "aliases": [
+        "RME",
+        "알엠이",
+        "TotalMix",
+        "토탈믹스",
+        "Fireface",
+        "UCX",
+        "UFX",
+        "Babyface"
+      ],
+      "software": "TotalMix FX",
+      "type": {
+        "code": "C",
+        "label": "출력 서브믹스형",
+        "cleaning": true
+      },
+      "oneLiner": "출력 채널에 루프백을 걸면 그 출력의 서브믹스가 곧 루프백 내용이 되는 방식(유형 C). 방송 표준으로 통하는 기기.",
+      "coreSettings": [
+        {
+          "n": 1,
+          "control": "AN 3/4 서브믹스 청소",
+          "위치": "아랫줄 출력 AN 3/4 클릭(SUBMIX 모드)",
+          "값": "AN 1/2(MIC)만 0.0, 나머지 전부 −∞",
+          "경고": "★맨 윗줄 Mic 1(하드웨어 생마이크)도 반드시 −∞★ — 안 내리면 에코·더블링."
+        },
+        {
+          "n": 2,
+          "control": "Loopback",
+          "위치": "AN 3/4의 렌치(스패너) 아이콘",
+          "값": "ON",
+          "이유": "이 출력의 서브믹스 내용이 그대로 루프백으로 컴퓨터에 돌아간다."
+        }
+      ],
+      "channelLayout": {
+        "맨 윗줄": "하드웨어 입력 (Mic 1 등) — 서브믹스에서는 내림",
+        "가운뎃줄": "Software Playback (AN 1/2 = MIC)",
+        "아랫줄": "출력 (AN 3/4에 루프백)",
+        "메모": "세 줄 구조를 먼저 이해시키면 고객이 훨씬 잘 따라온다."
+      },
+      "obsDevice": "Analog 3+4",
+      "pitfalls": [
+        "★ 서브믹스에서 맨 윗줄 Mic 1을 내리지 않으면 생마이크가 섞여 더블링.",
+        "AN 3/4를 클릭해 SUBMIX 모드로 들어간 상태에서 조절해야 한다.",
+        "완료 후 Snapshots에 Store 하지 않으면 세팅이 풀렸을 때 복구가 어렵다."
+      ],
+      "symptoms": [
+        {
+          "증상": "목소리가 두 번 들림",
+          "원인": "AN 3/4 서브믹스에 맨 윗줄 Mic 1이 올라와 있음",
+          "해결": "AN 3/4 SUBMIX에서 Mic 1을 −∞로"
+        },
+        {
+          "증상": "방송에 마이크가 안 나감",
+          "원인": "AN 3/4의 Loopback이 꺼짐 또는 OBS 장치가 Analog 3+4가 아님",
+          "해결": "렌치→Loopback ON, OBS 장치 = Analog 3+4"
+        },
+        {
+          "증상": "가운뎃줄 AN 1/2 미터가 안 뜸",
+          "원인": "REAPER 출력이 1/2로 안 감 또는 ASIO Fireface 미선택",
+          "해결": "REAPER 출력 라우팅과 ASIO 장치 확인"
+        },
+        {
+          "증상": "세팅이 풀림",
+          "원인": "스냅샷 미저장",
+          "해결": "Snapshots에 Store, 복구는 Mix 1 클릭"
+        }
+      ],
+      "guideImage": "rme-ucx.png",
+      "status": "완료 (주석본 검수 통과 · 템플릿 기준본)",
+      "setupSteps": [
+        {
+          "step": 1,
+          "title": "소프트웨어·드라이버 설치",
+          "do": "제조사 공식 사이트에서 TotalMix FX와 전용 ASIO 드라이버를 받아 설치하고 PC를 재시작합니다.",
+          "check": "장치 관리자와 윈도우 소리 설정에 기기 이름이 보이면 통과.",
+          "warn": "ASIO4ALL은 쓰지 않습니다. 반드시 이 기기 전용 ASIO를 씁니다."
+        },
+        {
+          "step": 2,
+          "title": "샘플레이트를 48000으로 통일",
+          "do": "윈도우 소리 설정, TotalMix FX, REAPER, OBS 네 곳을 모두 48000으로 맞춥니다.",
+          "where": "윈도우: 설정→시스템→소리→장치 속성→고급 / OBS: 설정→오디오→샘플레이트 / REAPER: 옵션→환경설정→오디오→장치",
+          "check": "네 곳의 숫자가 모두 같으면 통과.",
+          "warn": "OBS 기본값이 48kHz입니다."
+        },
+        {
+          "step": 3,
+          "title": "마이크 연결과 게인",
+          "do": "마이크를 전면 1/2번(MIC/LINE)에 꽂고 48V·게인을 올립니다. **맨 윗줄 Mic 1 미터**가 뜨는지 확인하세요 — 안 뜨면 48V·게인·케이블 위치 문제입니다.",
+          "check": "말할 때 입력 미터가 −18 ~ −12 dB 근처에서 움직이면 적당합니다.",
+          "warn": "페이더·노브의 0.0은 '꺼짐'이 아니라 유니티(그대로 통과)입니다. 진짜 끄기는 −∞."
+        },
+        {
+          "step": 4,
+          "title": "REAPER 오디오 장치 설정",
+          "do": "REAPER 옵션→환경설정→오디오→장치에서 이 기기의 전용 ASIO를 선택합니다.",
+          "check": "REAPER 하단에 장치 이름이 뜨고 입력 트랙 미터가 움직이면 통과."
+        },
+        {
+          "step": 5,
+          "title": "REAPER 보컬 체인 구성",
+          "do": "마이크 트랙에 AutoTune → 윤슬 Clean → DeEss → 윤슬 Tone → Limiter 순서로 겁니다.",
+          "check": "헤드폰으로 들었을 때 처리된 목소리가 들리면 통과."
+        },
+        {
+          "step": 6,
+          "title": "REAPER 출력을 재생 1/2로",
+          "do": "마이크 트랙의 출력(하드웨어 아웃)을 1/2로 보냅니다.",
+          "check": "TotalMix FX의 재생 1/2 미터가 말할 때 뛰면 통과. 이게 안 뛰면 아래 단계는 의미 없습니다.",
+          "warn": "여기서 미터가 안 뜨면 루프백을 아무리 만져도 소용없습니다. 반드시 먼저 해결하세요."
+        },
+        {
+          "step": 7,
+          "title": "AN 3/4를 SUBMIX 모드로 열기",
+          "do": "아랫줄 출력에서 **AN 3/4를 클릭**해 SUBMIX 모드로 들어갑니다.",
+          "where": "TotalMix FX 아랫줄(출력)",
+          "check": "AN 3/4가 선택된 상태로 표시되면 통과."
+        },
+        {
+          "step": 8,
+          "title": "★ AN 3/4 서브믹스 청소",
+          "do": "**AN 1/2(MIC)만 0.0으로 두고 나머지는 전부 −∞**로 내립니다.",
+          "where": "AN 3/4 SUBMIX 상태의 맨 윗줄·가운뎃줄",
+          "check": "AN 1/2만 올라와 있으면 통과.",
+          "warn": "★맨 윗줄 Mic 1(하드웨어 생마이크)도 반드시 내리세요★ — 안 내리면 REAPER를 거친 목소리와 생목소리가 겹쳐 에코·더블링이 납니다."
+        },
+        {
+          "step": 9,
+          "title": "AN 3/4 Loopback 켜기",
+          "do": "AN 3/4의 **렌치(스패너) 아이콘 → Loopback을 ON**으로 합니다.",
+          "where": "AN 3/4 채널의 렌치 아이콘",
+          "check": "Loopback 표시가 켜지면 통과."
+        },
+        {
+          "step": 10,
+          "title": "OBS 마이크 장치 지정",
+          "do": "OBS에서 마이크 소스의 장치를 **Analog 3+4**로 지정합니다.",
+          "where": "OBS: 설정→오디오, 또는 소스 목록의 오디오 입력 캡처",
+          "check": "OBS 오디오 믹서에서 말할 때 미터가 뛰면 통과.",
+          "warn": "크롬·디스코드는 OBS에서 소스별로 따로 잡습니다. 루프백에는 마이크만 들어갑니다."
+        },
+        {
+          "step": 11,
+          "title": "최종 확인 — 녹화 테스트",
+          "do": "OBS로 30초 녹화한 뒤 재생해서 ① 목소리가 들리는지 ② 에코·더블링이 없는지 ③ 크롬·디스코드가 따로 조절되는지 확인합니다.",
+          "check": "세 가지가 모두 정상이면 완료입니다.",
+          "warn": "목소리가 두 번 들리면 루프백 소스가 잘못된 것입니다. 루프백 단계로 돌아가세요."
+        },
+        {
+          "step": 12,
+          "title": "스냅샷 저장",
+          "do": "**Snapshots에 Store**로 현재 상태를 저장합니다.",
+          "check": "스냅샷 슬롯에 저장되면 통과.",
+          "warn": "세팅이 풀리면 Mix 1을 클릭해 복구합니다."
+        }
+      ]
+    },
+    "topping-e-otg": {
+      "id": "topping-e-otg",
+      "name": "TOPPING E OTG 시리즈 (E2x2 / E4x4)",
+      "aliases": [
+        "Topping E",
+        "E2x2",
+        "E4x4",
+        "E OTG",
+        "토핑 E",
+        "토핑 이투바이투",
+        "E2x2 OTG",
+        "E4x4 OTG"
+      ],
+      "software": "Topping Control Center",
+      "type": {
+        "code": "A",
+        "label": "직결형",
+        "cleaning": false
+      },
+      "oneLiner": "전용 Loopback 섹션의 소스 드롭다운만 지정하면 끝나는 직결형. 윤슬 기준 방송용 최고봉.",
+      "coreSettings": [
+        {
+          "n": 1,
+          "control": "Loopback 1+2 소스",
+          "위치": "전용 Loopback 섹션",
+          "값": "Playback 1/2",
+          "이유": "이것으로 끝. 믹스 청소가 필요 없다.",
+          "경고": "믹스(Mix A~D)로 두면 생마이크가 섞일 수 있다."
+        }
+      ],
+      "channelLayout": {
+        "Playback 1/2": "마이크(MIC) — 루프백 소스",
+        "Playback 3/4": "크롬(MR·반주)",
+        "Playback 5/6~": "디스코드 등",
+        "MixA_D": "독립 모니터 믹스 4개(iD14의 CUE와 같은 개념). 헤드폰 듣기용이며 루프백에는 불필요."
+      },
+      "obsDevice": "Loopback 1+2",
+      "pitfalls": [
+        "드롭다운이 다른 소스로 바뀌어 있는 경우.",
+        "OBS가 엉뚱한 루프백 채널(3+4 등)을 잡는 경우.",
+        "이 둘 말고는 거의 꼬이지 않는다."
+      ],
+      "symptoms": [
+        {
+          "증상": "방송에 마이크가 안 나감",
+          "원인": "Loopback 소스가 Playback 1/2이 아니거나 OBS가 다른 루프백 채널을 잡음",
+          "해결": "Loopback 1+2 = Playback 1/2, OBS 장치 = Loopback 1+2"
+        },
+        {
+          "증상": "목소리가 두 번 들림",
+          "원인": "루프백 소스가 믹스로 지정됨",
+          "해결": "소스를 Playback 1/2로 변경"
+        },
+        {
+          "증상": "세팅이 풀림",
+          "원인": "워크스페이스 미저장",
+          "해결": "Workspace 저장 아이콘으로 저장"
+        }
+      ],
+      "guideImage": "topping-e-otg.png",
+      "status": "완료 (박스 위치 최종 검수 남음)",
+      "setupSteps": [
+        {
+          "step": 1,
+          "title": "소프트웨어·드라이버 설치",
+          "do": "제조사 공식 사이트에서 Topping Control Center와 전용 ASIO 드라이버를 받아 설치하고 PC를 재시작합니다.",
+          "check": "장치 관리자와 윈도우 소리 설정에 기기 이름이 보이면 통과.",
+          "warn": "ASIO4ALL은 쓰지 않습니다. 반드시 이 기기 전용 ASIO를 씁니다."
+        },
+        {
+          "step": 2,
+          "title": "샘플레이트를 48000으로 통일",
+          "do": "윈도우 소리 설정, Topping Control Center, REAPER, OBS 네 곳을 모두 48000으로 맞춥니다.",
+          "where": "윈도우: 설정→시스템→소리→장치 속성→고급 / OBS: 설정→오디오→샘플레이트 / REAPER: 옵션→환경설정→오디오→장치",
+          "check": "네 곳의 숫자가 모두 같으면 통과.",
+          "warn": "OBS 기본값이 48kHz입니다."
+        },
+        {
+          "step": 3,
+          "title": "마이크 연결과 게인",
+          "do": "마이크를 입력에 꽂고, 콘덴서 마이크면 48V를 켠 뒤 게인을 올립니다.",
+          "check": "말할 때 입력 미터가 −18 ~ −12 dB 근처에서 움직이면 적당합니다.",
+          "warn": "페이더·노브의 0.0은 '꺼짐'이 아니라 유니티(그대로 통과)입니다. 진짜 끄기는 −∞."
+        },
+        {
+          "step": 4,
+          "title": "REAPER 오디오 장치 설정",
+          "do": "REAPER 옵션→환경설정→오디오→장치에서 이 기기의 전용 ASIO를 선택합니다.",
+          "check": "REAPER 하단에 장치 이름이 뜨고 입력 트랙 미터가 움직이면 통과."
+        },
+        {
+          "step": 5,
+          "title": "REAPER 보컬 체인 구성",
+          "do": "마이크 트랙에 AutoTune → 윤슬 Clean → DeEss → 윤슬 Tone → Limiter 순서로 겁니다.",
+          "check": "헤드폰으로 들었을 때 처리된 목소리가 들리면 통과."
+        },
+        {
+          "step": 6,
+          "title": "REAPER 출력을 재생 1/2로",
+          "do": "마이크 트랙의 출력(하드웨어 아웃)을 1/2로 보냅니다.",
+          "check": "Topping Control Center의 재생 1/2 미터가 말할 때 뛰면 통과. 이게 안 뛰면 아래 단계는 의미 없습니다.",
+          "warn": "여기서 미터가 안 뜨면 루프백을 아무리 만져도 소용없습니다. 반드시 먼저 해결하세요."
+        },
+        {
+          "step": 7,
+          "title": "Loopback 1+2 소스 = Playback 1/2",
+          "do": "전용 Loopback 섹션에서 **Loopback 1+2의 소스를 Playback 1/2**로 지정합니다. 이걸로 끝입니다.",
+          "where": "Control Center의 Loopback 섹션",
+          "check": "드롭다운이 Playback 1/2이면 통과.",
+          "warn": "Mix A~D는 헤드폰용 모니터 믹스입니다. 루프백 소스로 쓰지 마세요."
+        },
+        {
+          "step": 8,
+          "title": "OBS 마이크 장치 지정",
+          "do": "OBS에서 마이크 소스의 장치를 **Loopback 1+2**로 지정합니다.",
+          "where": "OBS: 설정→오디오, 또는 소스 목록의 오디오 입력 캡처",
+          "check": "OBS 오디오 믹서에서 말할 때 미터가 뛰면 통과.",
+          "warn": "크롬·디스코드는 OBS에서 소스별로 따로 잡습니다. 루프백에는 마이크만 들어갑니다."
+        },
+        {
+          "step": 9,
+          "title": "최종 확인 — 녹화 테스트",
+          "do": "OBS로 30초 녹화한 뒤 재생해서 ① 목소리가 들리는지 ② 에코·더블링이 없는지 ③ 크롬·디스코드가 따로 조절되는지 확인합니다.",
+          "check": "세 가지가 모두 정상이면 완료입니다.",
+          "warn": "목소리가 두 번 들리면 루프백 소스가 잘못된 것입니다. 루프백 단계로 돌아가세요."
+        },
+        {
+          "step": 10,
+          "title": "워크스페이스 저장",
+          "do": "**Workspace 저장 아이콘**으로 현재 설정을 저장합니다.",
+          "check": "저장 후 프로그램을 껐다 켜도 유지되면 통과."
+        }
+      ]
+    },
+    "arturia-minifuse": {
+      "id": "arturia-minifuse",
+      "name": "Arturia MiniFuse 2 / 4",
+      "aliases": [
+        "MiniFuse",
+        "미니퓨즈",
+        "MiniFuse 2",
+        "MiniFuse 4",
+        "Arturia MiniFuse",
+        "minifuse2",
+        "minifuse4"
+      ],
+      "software": "MiniFuse Control Center",
+      "type": {
+        "code": "B",
+        "label": "믹스 경유형",
+        "cleaning": true
+      },
+      "oneLiner": "윈도우에서는 Outputs 탭의 믹스를 만들어 그 믹스가 곧 루프백 내용이 되는 방식. 다른 기기와 달리 하드웨어 루프백이 아니라 드라이버 가상 채널이라 제약이 있다 — 윤슬 평가 '입문 마지노선'인 이유.",
+      "★다른기기와다른점": {
+        "구현": "SSL·Topping·Lewitt는 인터페이스 안에서 도는 하드웨어 루프백이지만, MiniFuse는 **드라이버가 만든 가상 채널**이다. 보이스미터 같은 외부 소프트웨어는 아니므로 우리 표준의 '소프트웨어 루프백 금지'에는 걸리지 않지만, 성격이 다르다는 점은 알고 있어야 한다.",
+        "OS별차이": "**윈도우와 맥의 구현이 다르다.** 윈도우: Outputs 탭에 Mix 1/2 · 3/4 · 5/6 세 개의 믹스 탭, 가상 입출력 8개. 맥: Loopback 탭, USB 3–4 중심. 고객 OS를 먼저 물어야 한다.",
+        "윈도우구조": "Mix 1/2 → 물리 출력 / Mix 3/4 · 5/6 → 애플리케이션이 잡을 수 있는 가상 출력쌍. 즉 방송에 쓸 믹스를 만들어 OBS가 그 가상 채널을 잡는 구조."
+      },
+      "coreSettings": [
+        {
+          "n": 1,
+          "control": "Outputs 탭의 방송용 믹스",
+          "위치": "MiniFuse Control Center → Outputs 탭 → Mix 3/4(또는 5/6) 서브탭",
+          "값": "DAW에서 돌아온 마이크(재생 1/2)만 올리고 나머지는 전부 내림",
+          "이유": "이 믹스 내용이 그대로 가상 출력으로 나가 OBS가 잡는다. 유형 B·C와 같은 '믹스 청소' 원칙이 적용된다.",
+          "경고": "하드웨어 입력의 생마이크가 이 믹스에 올라와 있으면 에코·더블링. 반드시 내린다."
+        }
+      ],
+      "★확인필요_데스크톱오디오": {
+        "보고내용": "Arturia 공식 포럼에 '업데이트 후 데스크톱 오디오가 강제로 루프백을 통과하며, 데스크톱 오디오를 끄지 않고서는 루프백으로 가는 것을 뮤트할 수 없다'는 사용자 보고가 있다.",
+        "왜중요": "사실이라면 '루프백에는 MIC만'이라는 우리 원칙을 이 기기에서는 지킬 수 없다는 뜻이 된다. 크롬·디스코드 소리가 마이크 루프백에 섞여 OBS 독립 밸런스가 깨진다.",
+        "상태": "특정 버전 사용자 보고이며 Arturia 공식 답변은 '지원팀 문의' 수준. 실기 확인 필요.",
+        "확인방법": "MiniFuse 연결 후 크롬에서 소리를 재생하면서, 방송용 믹스(Mix 3/4)에 그 소리가 섞여 들어가는지 미터로 확인."
+      },
+      "checks": [
+        {
+          "n": 2,
+          "point": "샘플레이트 48000",
+          "위치": "Control Center 상단 툴바의 샘플레이트 표시",
+          "정상": "윈도우·MiniFuse·REAPER·OBS 모두 48000.",
+          "지원범위": "44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz"
+        }
+      ],
+      "save": {
+        "n": 3,
+        "위치": "Control Center",
+        "동작": "현재 믹스 설정을 저장. 저장 항목의 정확한 위치는 실기 확인 필요.",
+        "주의": "다른 기기(프로필·워크스페이스·스냅샷)와 달리 명확한 저장 UI가 매뉴얼에 서술되지 않았다."
+      },
+      "channelLayout": {
+        "재생 1/2": "마이크(MIC) — 방송용 믹스에 올릴 유일한 소스",
+        "재생 3/4": "크롬(MR·반주)",
+        "재생 5/6~": "디스코드 등",
+        "주의": "MiniFuse의 Mix 3/4·5/6은 '믹스 이름'이지 우리 표준의 재생 채널 번호와 다르다. 헷갈리지 않게 안내할 것."
+      },
+      "obsDevice": "MiniFuse의 가상 출력쌍(Mix 3/4 또는 5/6에 대응) — 실기 확인 필요",
+      "obsDeviceStatus": "미확정. 종합정리에 'Loopback 9-10' 표기 자료가 있으나 매뉴얼 버전별로 채널 번호가 달라 확인 필요(구버전 매뉴얼은 3&4로 기술).",
+      "pitfalls": [
+        "★ 윈도우와 맥의 구현이 다르다 — 고객 OS를 먼저 확인.",
+        "방송용 믹스에 하드웨어 생마이크가 올라와 있으면 에코·더블링.",
+        "매뉴얼 버전에 따라 루프백 채널 번호가 다르게 기술된다(3&4 vs 9-10). 실기에서 확인.",
+        "데스크톱 오디오가 강제로 루프백에 섞이는 버전이 있다는 보고 — 확인 필요."
+      ],
+      "symptoms": [
+        {
+          "증상": "루프백에 크롬·디스코드 소리가 같이 섞여 나감",
+          "원인": "데스크톱 오디오가 강제로 루프백을 통과하는 버전일 수 있음",
+          "해결": "방송용 믹스에서 해당 채널을 내려본다. 안 되면 Control Center 버전 확인 후 Arturia 지원 문의."
+        },
+        {
+          "증상": "방송에 마이크가 에코·더블링",
+          "원인": "방송용 믹스에 하드웨어 입력(생마이크)이 올라와 있음",
+          "해결": "Outputs 탭의 해당 믹스에서 하드웨어 입력을 내린다"
+        },
+        {
+          "증상": "OBS에서 어떤 장치를 골라야 할지 모르겠음",
+          "원인": "MiniFuse는 가상 출력쌍을 OBS가 잡는 구조라 이름이 직관적이지 않음",
+          "해결": "Mix 3/4(또는 5/6)에 대응하는 가상 채널을 고른다. 정확한 표기는 실기 확인 필요."
+        },
+        {
+          "증상": "맥에서 화면이 매뉴얼과 다름",
+          "원인": "맥은 Loopback 탭(USB 3–4) 구조로 윈도우와 다름",
+          "해결": "OS에 맞는 절차로 안내"
+        }
+      ],
+      "manualUrl": "https://dl.arturia.net/products/minifuse-2/manual/minifuse-2_Manual_1_0_0_EN.pdf",
+      "manualUrl_v4": "https://dl.arturia.net/products/minifuse-4/manual/minifuse-4_Manual_1_0_0_EN.pdf",
+      "manualNote": "구버전(1.0.0) 매뉴얼은 루프백을 '채널 3&4, OS 설정으로 라우팅'으로 기술한다. 최신 버전은 Control Center 안에 Outputs/Loopback 탭 구조가 생겼다 — 고객의 소프트웨어 버전을 먼저 확인할 것.",
+      "guideImage": null,
+      "status": "조사 완료 · 실기 확인 항목 다수 · 주석 그림 미제작",
+      "setupSteps": [
+        {
+          "step": 1,
+          "title": "★ OS와 소프트웨어 버전 확인",
+          "do": "고객이 **윈도우인지 맥인지** 먼저 확인하고, MiniFuse Control Center 버전도 확인합니다.",
+          "where": "Control Center 상단 툴바 → 설정",
+          "check": "윈도우면 Outputs 탭에 Mix 1/2·3/4·5/6 서브탭이 보입니다. 맥이면 Loopback 탭이 보입니다.",
+          "warn": "MiniFuse는 **윈도우와 맥의 루프백 구조가 다릅니다.** 다른 기기에는 없는 선행 확인입니다. 구버전은 Control Center에 루프백 탭 자체가 없고 OS 소리 설정으로 라우팅하는 방식이었습니다."
+        },
+        {
+          "step": 2,
+          "title": "소프트웨어·드라이버 설치",
+          "do": "Arturia 공식 사이트에서 MiniFuse Control Center와 전용 ASIO 드라이버를 받아 설치하고 PC를 재시작합니다.",
+          "check": "장치 관리자와 윈도우 소리 설정에 MiniFuse가 보이면 통과.",
+          "warn": "ASIO4ALL은 쓰지 않습니다."
+        },
+        {
+          "step": 3,
+          "title": "샘플레이트를 48000으로 통일",
+          "do": "윈도우 소리 설정, Control Center, REAPER, OBS 네 곳을 모두 48000으로 맞춥니다.",
+          "where": "윈도우: 설정→시스템→소리→장치 속성→고급 / Control Center: 상단 툴바의 샘플레이트 표시 / OBS: 설정→오디오",
+          "check": "네 곳의 숫자가 모두 같으면 통과.",
+          "warn": "MiniFuse는 44.1~192kHz를 지원하지만 우리는 48000을 씁니다."
+        },
+        {
+          "step": 4,
+          "title": "마이크 연결과 게인",
+          "do": "마이크를 입력에 꽂고, 콘덴서 마이크면 **48V**를 켠 뒤 게인을 올립니다.",
+          "check": "Inputs 탭의 입력 미터가 −18 ~ −12 dB 근처에서 움직이면 적당합니다.",
+          "warn": "페이더·노브의 0.0은 '꺼짐'이 아니라 유니티(그대로 통과)입니다. 진짜 끄기는 −∞."
+        },
+        {
+          "step": 5,
+          "title": "REAPER 오디오 장치 설정",
+          "do": "REAPER 옵션→환경설정→오디오→장치에서 MiniFuse 전용 ASIO를 선택합니다.",
+          "check": "REAPER 하단에 장치 이름이 뜨고 입력 트랙 미터가 움직이면 통과."
+        },
+        {
+          "step": 6,
+          "title": "REAPER 보컬 체인 구성",
+          "do": "마이크 트랙에 AutoTune → 윤슬 Clean → DeEss → 윤슬 Tone → Limiter 순서로 겁니다.",
+          "check": "헤드폰으로 들었을 때 처리된 목소리가 들리면 통과."
+        },
+        {
+          "step": 7,
+          "title": "REAPER 출력을 재생 1/2로",
+          "do": "마이크 트랙의 출력을 1/2로 보냅니다.",
+          "check": "Control Center에서 해당 재생 채널 미터가 말할 때 뛰면 통과.",
+          "warn": "여기서 미터가 안 뜨면 아래 단계는 의미 없습니다. 반드시 먼저 해결하세요."
+        },
+        {
+          "step": 8,
+          "title": "★ 방송용 믹스 만들기 (믹스 청소)",
+          "do": "**Outputs 탭 → Mix 3/4**(또는 5/6) 서브탭에서 **DAW에서 돌아온 마이크만 올리고 나머지는 전부 내립니다.**",
+          "where": "MiniFuse Control Center → Outputs 탭 → Mix 3/4 서브탭",
+          "check": "그 믹스에 마이크만 올라와 있으면 통과. 말할 때만 미터가 뛰어야 합니다.",
+          "warn": "★하드웨어 입력의 생마이크를 반드시 내리세요★ — 안 내리면 REAPER를 거친 목소리와 생목소리가 겹쳐 에코·더블링이 납니다. Mix 1/2는 물리 출력용이라 방송용으로 쓰지 않습니다."
+        },
+        {
+          "step": 9,
+          "title": "★ 데스크톱 오디오 확인",
+          "do": "크롬에서 음악을 재생하면서 방송용 믹스(Mix 3/4)의 미터를 봅니다. **크롬 소리가 이 믹스에 섞여 들어오는지** 확인합니다.",
+          "where": "Outputs 탭 → Mix 3/4 미터",
+          "check": "말할 때만 뛰고 크롬 소리에는 안 뛰면 정상입니다.",
+          "warn": "일부 버전에서 **데스크톱 오디오가 강제로 루프백을 통과한다**는 사용자 보고가 있습니다. 섞여 들어온다면 이 기기로는 '루프백엔 MIC만' 원칙을 지킬 수 없으니, 그 상태를 기록하고 Arturia 지원에 문의해야 합니다."
+        },
+        {
+          "step": 10,
+          "title": "OBS 마이크 장치 지정",
+          "do": "OBS에서 마이크 소스의 장치를 **Mix 3/4에 대응하는 가상 입력**으로 지정합니다.",
+          "where": "OBS: 설정→오디오, 또는 오디오 입력 캡처 소스",
+          "check": "OBS 오디오 믹서에서 말할 때 미터가 뛰면 통과.",
+          "warn": "MiniFuse는 장치 이름이 직관적이지 않습니다. 정확한 표기는 아직 확정되지 않았으니, 확인되면 devices.json에 기록해 주세요."
+        },
+        {
+          "step": 11,
+          "title": "최종 확인 — 녹화 테스트",
+          "do": "OBS로 30초 녹화한 뒤 재생해서 ① 목소리가 들리는지 ② 에코·더블링이 없는지 ③ 크롬·디스코드가 따로 조절되는지 확인합니다.",
+          "check": "세 가지가 모두 정상이면 완료입니다.",
+          "warn": "목소리가 두 번 들리면 방송용 믹스에 생마이크가 올라와 있는 것입니다."
+        },
+        {
+          "step": 12,
+          "title": "설정 저장",
+          "do": "Control Center에서 현재 믹스 설정을 저장합니다.",
+          "check": "프로그램을 껐다 켜도 믹스가 유지되면 통과.",
+          "warn": "다른 기기(프로필·워크스페이스·스냅샷)와 달리 저장 UI가 매뉴얼에 명확히 서술되어 있지 않습니다. 실기에서 위치를 확인해 주세요."
+        }
+      ]
+    }
+  },
+  "twoPcSetup": {
+    "label": "투컴 세팅 (게임컴 + 송출컴)",
+    "핵심원칙": "오디오 인터페이스의 USB는 반드시 OBS가 있는 PC(송출컴)에 꽂는다.",
+    "이유": "하드웨어 루프백은 인터페이스 USB가 꽂힌 그 PC에만 '입력'으로 생긴다. 인터페이스를 게임컴에 꽂으면 루프백이 게임컴에 생기고, OBS는 송출컴에 있으므로 그 소리를 잡을 수 없다.",
+    "권장구성_A": {
+      "이름": "A안 · 인터페이스=송출컴 (권장)",
+      "송출컴": [
+        "오디오 인터페이스(USB)",
+        "REAPER 보컬 체인",
+        "OBS",
+        "디스코드"
+      ],
+      "게임컴": [
+        "게임·크롬·음악",
+        "사운드블라스터(사운드카드 역할)"
+      ],
+      "연결1": "게임컴 HDMI → 캡처보드 → 송출컴 (영상)",
+      "연결2": "게임컴 사블 Line Out → 송출컴 인터페이스 Line In (게임 소리, 아날로그)",
+      "모니터": "게임 소리는 캡처보드를 거치지 않고 인터페이스로 바로 들어오므로 헤드폰에서 지연 없이 들린다.",
+      "장점": [
+        "기존 단컴 표준(마이크→인터페이스→REAPER→재생1/2→루프백→OBS)이 그대로 적용된다. 기기별 가이드를 고칠 필요 없음.",
+        "REAPER가 게임 부하의 영향을 받지 않아 ASIO가 안정적이다.",
+        "게임 소리가 마이크와 섞이지 않고 OBS에서 별도 소스로 잡혀 독립 밸런스 원칙이 유지된다."
+      ],
+      "주의": "송출컴 인코딩은 NVENC(GPU) 권장. x264(CPU)로 돌리면 REAPER ASIO가 끊길 수 있다."
+    },
+    "비권장구성_B": {
+      "이름": "B안 · 인터페이스=게임컴 (비권장)",
+      "문제": "루프백이 게임컴에 생기므로 송출컴으로 넘기려면 아날로그 Line Out→Line In 한 단계를 더 타야 한다.",
+      "손실": [
+        "마이크·게임·디스코드가 스테레오 한 쌍으로 합쳐져 OBS에서 소스별 독립 밸런스를 잃는다.",
+        "D/A→A/D 변환이 한 번 더 끼고 아날로그 노이즈·그라운드 루프 위험이 생긴다.",
+        "게임이 CPU를 점유해 REAPER 보컬 체인이 끊기거나 지직거릴 수 있다(버퍼를 키워야 함)."
+      ],
+      "언제쓰나": "단컴으로 쓰던 사람이 송출컴을 나중에 붙인 경우. 가능하면 A안으로 옮기도록 안내."
+    },
+    "구성_C": {
+      "이름": "C안 · Lewitt Connect 6 (USB 2개, 디지털 투컴)",
+      "설명": "Connect 6은 USB-C 포트가 두 개다. Computer 포트에 송출컴, Mobile 포트에 게임컴을 연결하면 두 PC 사이에 디지털로 오디오를 주고받는다.",
+      "장점": "아날로그 케이블이 없으므로 노이즈·그라운드 루프가 원천적으로 없다.",
+      "제약": "두 번째 포트는 스테레오 2채널(입력 5/6 + 모바일 출력). 다채널 분리는 안 된다.",
+      "메모": "고객이 투컴을 예고하면 Connect 6을 우선 추천할 근거가 된다.",
+      "컨트롤": "게임 소리는 Hardware Inputs의 'Mobile In'으로 들어오고, 게임컴으로 보낼 소리는 Hardware Outputs의 'Mobile Out' 드롭다운에서 고른다(디스코드용이면 Out 1/2)."
+    },
+    "사운드블라스터": {
+      "역할": "투컴에서 사블은 '송출용 루프백 장치'가 아니라 게임컴의 사운드카드다. 게임 소리를 깨끗하게 아날로그로 내보내는 것이 임무.",
+      "연결": "게임컴 → 사블(USB/PCIe) → 사블 Line Out → 송출컴 인터페이스 Line In",
+      "해당모델": "G6, GC7, X3/X4/X5(외장) · AE-5/AE-7/AE-9, Z 시리즈(내장). Line Out 또는 광출력이 있는 모델이면 된다.",
+      "광출력": "사블에 광(S/PDIF) 출력이 있고 인터페이스에 광 입력이 있으면 광케이블이 최선 — 디지털이라 노이즈와 그라운드 루프가 아예 없다.",
+      "What_U_Hear_함정": {
+        "정체": "사블의 소프트웨어 루프백(스테레오 믹스). 그 PC에서 나는 모든 소리를 녹음한다.",
+        "왜위험": "우리 표준은 하드웨어 루프백만 쓴다. What U Hear를 켜면 게임컴의 모든 소리가 통째로 잡혀 마이크가 이중으로 섞이거나 에코·더블링이 난다.",
+        "원칙": "투컴에서 What U Hear는 끈다. 게임 소리는 사블 Line Out으로 아날로그로만 넘긴다.",
+        "예외": "마이크를 게임컴에 붙이는 구형 방식(스테레오믹스 방식)에서만 쓰이며, 우리 표준에서는 쓰지 않는다."
+      }
+    },
+    "디스코드": {
+      "문제": "마이크는 송출컴 인터페이스에 있는데 게임과 음성채팅은 게임컴에서 하려는 경우.",
+      "해결1": "디스코드를 송출컴에서 실행 (가장 간단, 마이크가 이미 거기 있음).",
+      "해결2": "인터페이스의 남는 출력 → 게임컴 사블 Line In 으로 보내고, 디스코드 입력을 그 Line In으로 지정.",
+      "해결3": "Lewitt Connect 6의 두 번째 USB로 디지털 전송 (C안)."
+    },
+    "샘플레이트": {
+      "원칙": "48000 통일. 투컴에서는 맞춰야 할 곳이 늘어난다: 송출컴 인터페이스·REAPER·OBS + 게임컴 윈도우·사블 + 캡처보드.",
+      "아날로그예외": "게임컴→송출컴을 아날로그 케이블로 연결하면 그 구간은 샘플레이트 불일치의 영향을 받지 않는다(아날로그라서). 디지털(광·USB·캡처보드)로 넘길 때만 양쪽을 맞추면 된다."
+    },
+    "노이즈": {
+      "증상": "두 PC를 아날로그 케이블로 연결한 뒤 '웅—' 하는 험이 생김.",
+      "원인": "그라운드 루프. 두 PC가 서로 다른 콘센트에서 접지되어 전위차가 생긴 것.",
+      "해결순서": [
+        "두 PC와 인터페이스를 같은 멀티탭(같은 콘센트)에 물린다.",
+        "그래도 남으면 그라운드 루프 아이솔레이터를 케이블 중간에 넣는다.",
+        "근본 해결은 디지털 연결(광케이블 또는 Connect 6의 두 번째 USB)로 바꾸는 것."
+      ]
+    },
+    "캡처보드오디오": {
+      "원칙": "캡처보드는 영상 담당. 게임 소리를 캡처보드로 받으면 한 단계 거치면서 지연이 생긴다.",
+      "실무": "OBS 송출용으로는 캡처보드 오디오를 써도 되지만(영상과 자동 동기), 스트리머가 귀로 듣는 경로는 반드시 아날로그 직결이어야 지연이 없다.",
+      "중복주의": "캡처보드 오디오와 아날로그 Line In 을 OBS에서 둘 다 켜면 게임 소리가 두 번 들어가 울린다. 하나만 켠다."
+    },
+    "증상표": [
+      {
+        "증상": "방송에 마이크가 안 나감 (투컴)",
+        "원인": "인터페이스가 게임컴에 꽂혀 있어 루프백이 송출컴에 없음",
+        "해결": "인터페이스 USB를 송출컴으로 옮긴다 (A안)"
+      },
+      {
+        "증상": "게임 소리가 두 번 들림 / 울림",
+        "원인": "OBS에서 캡처보드 오디오와 아날로그 Line In을 동시에 켬",
+        "해결": "둘 중 하나만 켠다"
+      },
+      {
+        "증상": "마이크가 에코·더블링 (투컴)",
+        "원인": "게임컴에서 What U Hear(스테레오 믹스)가 켜져 있음",
+        "해결": "What U Hear를 끄고 게임 소리는 사블 Line Out 아날로그로만 넘긴다"
+      },
+      {
+        "증상": "'웅—' 하는 험 노이즈",
+        "원인": "두 PC 사이 그라운드 루프",
+        "해결": "같은 멀티탭 → 아이솔레이터 → 광/USB 디지털 연결 순으로 시도"
+      },
+      {
+        "증상": "게임 소리가 늦게 들림",
+        "원인": "게임 소리를 캡처보드로 받아 듣고 있음",
+        "해결": "사블 Line Out → 인터페이스 Line In 아날로그 직결로 듣는다"
+      },
+      {
+        "증상": "REAPER가 지직거리거나 끊김",
+        "원인": "REAPER가 게임컴에서 돌아 게임과 CPU 경쟁 / 송출컴 x264 인코딩 부하",
+        "해결": "REAPER를 송출컴으로 옮기고 인코딩을 NVENC로 변경, 필요시 ASIO 버퍼 상향"
+      }
+    ],
+    "guideImage": "two-pc.png",
+    "status": "조사 완료 · 실기 검증 전",
+    "triggers": [
+      "투컴",
+      "투컴세팅",
+      "2컴",
+      "두대",
+      "컴퓨터 2대",
+      "듀얼PC",
+      "dual pc",
+      "송출컴",
+      "게임컴",
+      "방송컴",
+      "캡처보드",
+      "사운드블라스터",
+      "사블"
+    ]
+  },
+  "diagnose": {
+    "정책": "증상만 듣고 바로 답하지 않는다. 아래 필수확인이 채워지기 전에는 되묻는다. 추측으로 답하면 고객이 엉뚱한 곳을 만져 상태가 더 나빠진다.",
+    "되묻기규칙": "한 번에 하나씩 묻지 말고, 모르는 항목을 한 번에 묶어서 묻는다. 이미 질문에 답이 들어 있으면 그 항목은 다시 묻지 않는다.",
+    "필수확인": [
+      {
+        "key": "where",
+        "q": "안 들리는 게 방송(시청자 쪽)인가요, 아니면 본인 헤드폰인가요?",
+        "why": "방송이면 루프백·OBS 경로, 본인 귀면 모니터 경로. 완전히 다른 곳을 봐야 한다.",
+        "options": [
+          "방송",
+          "내 헤드폰",
+          "둘 다"
+        ]
+      },
+      {
+        "key": "what",
+        "q": "안 들리는 소리가 본인 목소리(마이크)인가요, 게임·음악 소리인가요?",
+        "why": "마이크면 루프백 소스 문제, 게임 소리면 입력·케이블 문제.",
+        "options": [
+          "마이크",
+          "게임/음악",
+          "디스코드"
+        ]
+      },
+      {
+        "key": "device",
+        "q": "오디오 인터페이스 모델이 무엇인가요?",
+        "why": "기기마다 루프백 설정 지점이 다르다. 모델을 알아야 정확한 칸을 짚어줄 수 있다.",
+        "fallback": "모델을 모르면 devices에 없는 기기로 보고 웹검색+manualUrl 폴백, 답에 '추정' 명시."
+      },
+      {
+        "key": "pcCount",
+        "q": "컴퓨터는 1대인가요, 게임컴·송출컴 2대인가요?",
+        "why": "투컴이면 인터페이스가 어느 컴에 꽂혀 있는지가 1순위 원인이 된다.",
+        "followUp": "투컴이면 반드시 추가: '인터페이스 USB는 게임컴과 송출컴 중 어디에 꽂혀 있나요?'"
+      }
+    ],
+    "트리": [
+      {
+        "조건": "투컴 + 방송 + 마이크 안 나감 + 인터페이스가 게임컴에 꽂힘",
+        "판정": "근본 원인 확정. 다른 설정을 만질 필요 없음.",
+        "답": "하드웨어 루프백은 USB가 꽂힌 PC에만 입력으로 생깁니다. 인터페이스가 게임컴에 있으면 루프백도 게임컴에 생기고, OBS는 송출컴에 있으니 잡을 수 없습니다. 인터페이스 USB를 송출컴으로 옮기고 REAPER도 송출컴에서 실행하세요.",
+        "참조": "twoPcSetup.권장구성_A"
+      },
+      {
+        "조건": "투컴 + 방송 + 마이크 안 나감 + 인터페이스가 송출컴에 꽂힘",
+        "판정": "배치는 맞음. 기기별 루프백 설정으로 내려간다.",
+        "답": "해당 기기의 coreSettings를 순서대로 확인시킨다. 그 다음 OBS 마이크 장치가 그 기기의 루프백 입력으로 지정되어 있는지 확인.",
+        "참조": "devices[모델].coreSettings + devices[모델].obsDevice"
+      },
+      {
+        "조건": "투컴 + 본인 헤드폰 + 게임 소리 안 들림",
+        "판정": "게임컴→송출컴 아날로그 경로 문제.",
+        "답": "게임컴 사블 Line Out → 송출컴 인터페이스 Line In 케이블 연결과 인터페이스의 해당 입력 게인을 확인. 캡처보드로 듣고 있으면 지연이 생기므로 아날로그 직결로 바꾼다.",
+        "참조": "twoPcSetup.캡처보드오디오"
+      },
+      {
+        "조건": "투컴 + 방송 + 게임 소리가 두 번 들림·울림",
+        "판정": "OBS 소스 중복.",
+        "답": "OBS에서 캡처보드 오디오와 인터페이스 Line In이 동시에 켜져 있는지 확인. 하나만 남긴다.",
+        "참조": "twoPcSetup.캡처보드오디오.중복주의"
+      },
+      {
+        "조건": "투컴 + 마이크가 에코·더블링",
+        "판정": "소프트웨어 루프백이 켜져 있거나 루프백 소스가 버스로 지정됨.",
+        "답": "① 게임컴 사블의 What U Hear(스테레오 믹스)를 끈다. ② 인터페이스 루프백 소스가 Monitor/HP 같은 버스가 아니라 재생 1/2인지 확인.",
+        "참조": "twoPcSetup.사운드블라스터.What_U_Hear_함정"
+      },
+      {
+        "조건": "단컴 + 방송 + 마이크 안 나감",
+        "판정": "기기별 루프백 설정 또는 OBS 장치 지정 문제.",
+        "답": "devices[모델].symptoms에서 같은 증상을 찾아 원인·해결을 그대로 안내.",
+        "참조": "devices[모델].symptoms"
+      },
+      {
+        "조건": "'웅—' 하는 험 노이즈 + 투컴",
+        "판정": "그라운드 루프.",
+        "답": "① 두 PC와 인터페이스를 같은 멀티탭에 물린다 ② 그라운드 루프 아이솔레이터 ③ 광(S/PDIF) 또는 Connect 6의 두 번째 USB로 디지털 연결. 순서대로 시도.",
+        "참조": "twoPcSetup.노이즈"
+      }
+    ],
+    "답변원칙": [
+      "설정 지점을 짚을 때는 '어느 화면의 어느 칸'까지 말한다. 예: 'SSL 360 오른쪽 CONTROL 패널 맨 아래 LOOPBACK SOURCE'.",
+      "한 번에 하나씩 시키고, 각 단계마다 무엇이 보이면 정상인지 알려준다.",
+      "확인되지 않은 항목(예: SSL 12의 OBS 장치명)은 '확정 아님'이라고 밝히고 확인 방법을 알려준다.",
+      "devices에 없는 기기는 loopbackTypes로 유형을 추정하고, 답에 '추정'이라고 명시한다.",
+      "페이더 0.0은 꺼짐이 아니라 유니티라는 점을 게인 관련 안내에서 항상 상기시킨다."
+    ]
+  },
+  "openItems": {
+    "설명": "원격 세팅 세션 중에 확인할 항목. 윤슬이 고객 화면을 직접 보므로 세션마다 하나씩 채우면 된다. 확인되면 해당 device의 status와 함께 갱신할 것.",
+    "항목": [
+      {
+        "device": "ssl-12",
+        "name": "SSL 12",
+        "verify": [
+          {
+            "q": "OBS 마이크 장치 목록에 뜨는 정확한 이름",
+            "where": "OBS → 설정 → 오디오 (또는 오디오 입력 캡처 소스)",
+            "why": "SSL 18은 'Input 9-10'으로 확정됐지만 SSL 12는 공식 문서에 채널 번호가 없음"
+          }
+        ],
+        "capture": [
+          {
+            "what": "SSL 360° 믹서 전체 화면",
+            "note": "이미 확보 · 교체 불필요"
+          }
+        ]
+      },
+      {
+        "device": "lewitt-connect6",
+        "name": "Lewitt CONNECT 6",
+        "verify": [
+          {
+            "q": "OBS에 뜨는 Loopback 입력의 정확한 이름",
+            "where": "OBS 오디오 장치 목록",
+            "why": "공식 가이드가 'Loopback 입력'이라고만 표기"
+          },
+          {
+            "q": "Mobile 포트에 두 번째 PC를 물렸을 때 실제로 인식되는지",
+            "where": "두 번째 USB-C에 PC 연결 후 Mobile In 미터 확인",
+            "why": "공식 문서는 '폰 또는 두 번째 컴퓨터'라고만 함 — 투컴 추천의 근거라 중요"
+          }
+        ],
+        "capture": [
+          {
+            "what": "CONTROL CENTER 실기 화면",
+            "note": "현재는 공식 홍보 이미지 사용 중 · 실기로 교체하면 더 좋음"
+          }
+        ]
+      },
+      {
+        "device": "topping-m62",
+        "name": "TOPPING M62",
+        "verify": [
+          {
+            "q": "Loopback 1/2 소스의 공장 초기값이 정말 Mix A인지",
+            "where": "M Control Center → Loopback 섹션 (초기화 직후 상태)",
+            "why": "'기본값이 위험하다'는 우리 경고의 근거. 아니면 문구를 완화해야 함"
+          },
+          {
+            "q": "Ducking Map에서 Playback 1/2를 켠 채 말하면 실제로 목소리가 펌핑되는지",
+            "where": "Ducking 창에서 Playback 1/2 켜고 → 말하면서 루프백 미터 관찰",
+            "why": "매뉴얼 정의에서 추론한 항목 — 실제 확인 안 됨"
+          },
+          {
+            "q": "OBS에 뜨는 Loopback 1/2 입력의 정확한 이름",
+            "where": "OBS 오디오 장치 목록",
+            "why": ""
+          }
+        ],
+        "capture": [
+          {
+            "what": "M Control Center 메인 화면 전체 (Live Streaming 모드)",
+            "note": "현재는 매뉴얼 도판의 Loopback 섹션만 사용 중"
+          }
+        ]
+      },
+      {
+        "device": "audient-id14",
+        "name": "Audient iD14 MkII",
+        "verify": [
+          {
+            "q": "★ Setup → Input Routing 에 'DAW 1+2' 선택지가 있는지",
+            "where": "iD Mixer → Setup 메뉴 → Input Routing 드롭다운",
+            "why": "있으면 CUE B 청소 단계를 통째로 없앨 수 있음. 지금 절차에서 사고가 제일 많이 나는 지점"
+          },
+          {
+            "q": "MkI에서 쓰던 '유사 루프백'이 무엇이었는지",
+            "where": "기존 고객 사례 회상 또는 MkI 실기",
+            "why": "Audient는 '루프백은 MkII 전용'이라고 명시 — 사내 메모와 충돌"
+          },
+          {
+            "q": "48kHz 무음 버그가 최신 펌웨어에서도 재현되는지",
+            "where": "48kHz로 바꾸고 루프백 송출 테스트",
+            "why": "고쳤다면 iD14도 48000 표준에 합류시킬 수 있음"
+          },
+          {
+            "q": "OBS 장치가 'Input 11+12'로 뜨는지 'Loopback 1+2'로 뜨는지",
+            "where": "OBS 오디오 장치 목록",
+            "why": "공식 문서가 둘 다 언급"
+          }
+        ],
+        "capture": [
+          {
+            "what": "iD Mixer CUE B 화면",
+            "note": "공식 이미지 URL 확보됨 · 실기 있으면 교체"
+          },
+          {
+            "what": "Setup → Input Routing 드롭다운 열린 상태",
+            "note": "선택지 확인용 — 가장 중요"
+          }
+        ]
+      },
+      {
+        "device": "rme-totalmix",
+        "name": "RME (TotalMix FX)",
+        "verify": [
+          {
+            "q": "OBS 장치가 'Analog 3+4'로 뜨는지",
+            "where": "OBS 오디오 장치 목록",
+            "why": "절차는 검증됐으나 표기 확인"
+          }
+        ],
+        "capture": [
+          {
+            "what": "TotalMix FX 전체 화면 (AN 3/4 SUBMIX 상태)",
+            "note": "주석 그림 미제작 — 세 줄 구조가 보이게"
+          }
+        ]
+      },
+      {
+        "device": "topping-e-otg",
+        "name": "TOPPING E OTG",
+        "verify": [
+          {
+            "q": "OBS 장치가 'Loopback 1+2'로 뜨는지",
+            "where": "OBS 오디오 장치 목록",
+            "why": ""
+          }
+        ],
+        "capture": [
+          {
+            "what": "Control Center 전체 화면 (Loopback 섹션 포함)",
+            "note": "주석 그림 미제작"
+          }
+        ]
+      }
+    ]
+  }
+}
