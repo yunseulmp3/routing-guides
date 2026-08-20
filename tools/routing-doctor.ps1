@@ -29,7 +29,7 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
-$ScriptVersion = '2.2'
+$ScriptVersion = '2.3'
 
 # =====================================================================
 # 0. 윤슬 표준 정의 (여기만 고치면 판정 기준이 바뀝니다)
@@ -76,6 +76,7 @@ $VendorByName = @(
     @{ Name = 'Scarlett';       Brand = 'Focusrite';         Mixer = 'Focusrite Control' }
     @{ Name = 'Clarett';        Brand = 'Focusrite';         Mixer = 'Focusrite Control' }
     @{ Name = 'Vocaster';       Brand = 'Focusrite';         Mixer = 'Focusrite Control' }
+    @{ Name = 'M62';            Brand = 'Topping';           Mixer = 'M Control Center'; Grade = 'A' }
     @{ Name = 'Topping';        Brand = 'Topping';           Mixer = 'Topping 전용 앱'; Grade = 'B' }
     @{ Name = 'Lewitt';         Brand = 'Lewitt';            Mixer = 'CONTROL CENTER' }
     @{ Name = 'CONNECT 6';      Brand = 'Lewitt';            Mixer = 'CONTROL CENTER'; Grade = 'B' }

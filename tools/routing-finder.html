@@ -694,6 +694,60 @@ const GRADE_DECK = {
 };
 DEVICES.push(GRADE_DECK);
 
+
+const M62_DECK = {
+  id:"m62", name:"Topping M62", mixer:"M Control Center", status:"draft", grade:"A",
+  alias:["m62","엠62","토핑 m62","토핑 엠62"],
+  note:"공식 매뉴얼(M62 V1.1 / M Control Center V1.1) 기준 초안 · 실물 검증 전",
+  slides:[
+    {k:"구조", t:"이 기기가 가진 것", body:[
+      "<b>루프백 4쌍</b> — <code>Loopback 1/2</code> · <code>3/4</code> · <code>5/6</code> · <code>7/8</code>. 컴퓨터가 녹음 입력으로 4개를 봅니다.",
+      "<b>재생 5쌍</b> — <code>Playback 1/2</code> ~ <code>9/10</code>",
+      "<b>믹스 버스</b> — Live Streaming Mode에서 <b>Mix A~E (5개)</b>, Pro Audio Mode에서 Mix A~C (3개)",
+      "<b>루프백 소스를 드롭다운으로 선택</b>할 수 있고, 루프백마다 페이더가 따로 있습니다."
+    ], img:"Topping-m62.jpg", cap:"Topping M62 · M Control Center",
+     note:"<b>루프백이 4쌍</b>이라 방송용·노래방용·합주용을 다 만들고도 하나가 남습니다. RME와 같은 <b>A급</b>입니다."},
+
+    {k:"0단계", t:"먼저 모드를 고릅니다", body:[
+      "M62는 <b>Live Streaming / Pro Audio / Mobile</b> 세 가지 모드가 있습니다.",
+      "<b>Live Streaming Mode</b>를 씁니다. 믹스 버스가 5개(Mix A~E)로 가장 많습니다.",
+      "<b>Mobile Mode에는 루프백이 없습니다.</b> 이 모드에서는 표준 라우팅을 만들 수 없습니다.",
+      "샘플레이트는 44.1k~96k. 다른 기기와 맞춰 <b>48kHz</b>로 통일하는 것을 권장합니다."
+    ], warn:"휴대폰을 연결하는 <b>OTG 포트는 48kHz 고정</b>입니다. 폰을 같이 쓴다면 전체를 48kHz로 맞추세요."},
+
+    {k:"1단계", t:"재생 채널 배정", body:[
+      "<b>Playback 1/2 → <code>MIC</code></b> — REAPER가 ASIO로 출력하는 채널",
+      "<b>Playback 3/4 → <code>Chrome</code></b>",
+      "<b>Playback 5/6 → <code>Discord</code></b>",
+      "<b>Playback 7/8, 9/10</b> — 게임·음악 등 추가 소스가 있으면 순서대로",
+      "윈도우 장치 이름도 같은 이름으로 바꿉니다 (LoopbackKit)."
+    ], note:"재생이 5쌍이라 소스를 넉넉하게 나눌 수 있습니다. RME(4쌍)보다도 여유가 있습니다."},
+
+    {k:"2단계", t:"용도별 믹스 만들기", body:[
+      "<b>Mix A = 방송용</b> — <code>MIC</code>만 올립니다.",
+      "<b>Mix B = 노래방용</b> — <code>MIC</code> + <code>Chrome</code>(반주)",
+      "<b>Mix C = 합주용</b> — <code>MIC</code> 계열",
+      "<b>Mix D = 모니터링</b> — 듣고 싶은 소리를 전부. 헤드폰이 이걸 받습니다.",
+      "각 믹스에서 <b>하드웨어 입력(생마이크)은 −∞</b>로 내립니다."
+    ], warn:"믹서에서 <b>0.0은 통과이지 음소거가 아닙니다.</b> 내린다는 것은 <b>맨 아래까지</b> 내리는 것입니다."},
+
+    {k:"3단계", t:"루프백에 믹스 연결", body:[
+      "Loopback 섹션에서 <b>소스 드롭다운</b>을 엽니다.",
+      "<b>Loopback 1/2 ← Mix A</b> (방송용), <b>3/4 ← Mix B</b> (노래방), <b>5/6 ← Mix C</b> (합주)",
+      "각 루프백의 페이더로 컴퓨터로 돌아가는 레벨을 맞춥니다.",
+      "방송·통화 앱은 각각 해당 <code>Loopback</code> 입력을 마이크로 지정합니다."
+    ], warn:"<b>확인 필요</b> — 드롭다운 선택지가 <i>All mixer outputs / All hardware inputs / All computer playback signals / FX signal</i> 형태입니다. <b>개별 Mix(A~E)를 콕 집어 지정할 수 있는지</b>가 매뉴얼에 명확하지 않습니다. 실물에서 이 부분만 확인하면 절차가 확정됩니다."},
+
+    {k:"마무리", t:"점검", body:[
+      "볼륨 믹서에서 <b>Chrome → <code>Chrome</code></b>, <b>Discord → <code>Discord</code></b> 지정 후 앱 재시작.",
+      "전 엔드포인트 샘플레이트 통일 확인.",
+      "기본 재생·녹음 장치가 M62로 잡혀 있는지 확인.",
+      "<b>라우팅 닥터</b>를 돌려 결과 파일 보관."
+    ], note:"실물 확인 결과를 알려주시면 <b>전용 절차</b>로 승격합니다. 확인할 것은 3단계의 드롭다운 하나뿐입니다."}
+  ]
+};
+DEVICES.push(M62_DECK);
+
 const SVGS = {GRADE:SVG_GRADE, TOPO:SVG_TOPO, TREE:SVG_TREE, OPT:SVG_OPT, ANALOG:SVG_ANALOG};
 DEVICES.push(TWOPC_DECK);
 
@@ -711,7 +765,7 @@ const CATALOG = [
  {n:"Topping E OTG 시리즈 (E1x2 / E2x2 / E4x4 / E8x8)", a:["topping","토핑","e otg","eotg","e1x2","e2x2","e4x4","e8x8"],
   t:"추천", g:"B", l:"single", m:"TOPPING Control Center", c:"저가형 기준 균형 잡힌 밸런스, 높은 안정성. 투컴·방송 세팅 최고봉.", link:"topping-eotg"},
  {n:"Topping M62", a:["m62","엠62","토핑 m62"],
-  t:"추천", g:"", l:"", m:"M Control Center", c:"E 시리즈보다 조금 낮은 성능. 다만 베이비페이스 수준의 채널 분리.", img:"Topping-m62.jpg"},
+  t:"추천", g:"A", l:"multi", m:"M Control Center", c:"E 시리즈보다 조금 낮은 성능. 다만 베이비페이스 수준의 채널 분리.", img:"Topping-m62.jpg", link:"m62"},
  {n:"SSL 18", a:["ssl18","ssl 18","에스에스엘18"],
   t:"추천", g:"", l:"", m:"SSL 360", c:"성능·방송 다 좋은 편. 사놨으면 투컴 세팅도 문제 없음.", img:"SSL-18.jpeg"},
  {n:"Lewitt CONNECT 6", a:["lewitt","르윗","레빗","connect 6","connect6","커넥트6"],
