@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>윤슬 라우팅 파인더</title>
+<style>
+  :root{
+    --bg:#0d1014; --bg2:#141920; --card:#1a212b; --line:#28313d;
+    --tx:#e8edf3; --tx2:#9aa7b6; --tx3:#66748a;
+    --ac:#5eead4; --ac2:#2dd4bf; --warn:#fbbf24; --bad:#f87171; --ok:#4ade80;
+    --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #17202b 0%, var(--bg) 60%);
+    color:var(--tx); font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+  /* ===== 검색 화면 ===== */
+  #home{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+  .logo{font-size:13px;letter-spacing:.22em;color:var(--ac);font-weight:700;margin-bottom:18px}
+  .h1{font-size:clamp(26px,4.4vw,42px);font-weight:800;letter-spacing:-.02em;text-align:center;line-height:1.25}
+  .sub{margin-top:14px;color:var(--tx2);font-size:15px;text-align:center;line-height:1.7}
+  .searchbox{position:relative;width:min(620px,100%);margin-top:34px}
+  .searchbox input{
+    width:100%;padding:18px 54px 18px 20px;font-size:17px;color:var(--tx);
+    background:var(--card);border:1px solid var(--line);border-radius:var(--r);outline:none;
+    transition:border-color .15s, box-shadow .15s;font-family:inherit;
+  }
+  .searchbox input:focus{border-color:var(--ac2);box-shadow:0 0 0 4px rgba(45,212,191,.12)}
+  .searchbox input::placeholder{color:var(--tx3)}
+  .sicon{position:absolute;right:18px;top:50%;transform:translateY(-50%);color:var(--tx3);pointer-events:none}
+  .ac{position:absolute;left:0;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--line);
+      border-radius:var(--r);overflow:hidden;z-index:20;display:none;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+  .ac.on{display:block}
+  .ac-item{padding:13px 18px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(40,49,61,.6)}
+  .ac-item:last-child{border-bottom:none}
+  .ac-item:hover,.ac-item.sel{background:#212a36}
+  .ac-name{font-weight:600;font-size:15px}
+  .ac-meta{color:var(--tx3);font-size:12.5px;margin-left:auto}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:26px;max-width:700px;transition:opacity .15s}
+  .chips.dim{opacity:0;pointer-events:none}
+  .chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(26,33,43,.6);
+        color:var(--tx2);font-size:13px;cursor:pointer;transition:.15s}
+  .chip:hover{border-color:var(--ac2);color:var(--tx)}
+  .foot{margin-top:44px;color:var(--tx3);font-size:12.5px;text-align:center;line-height:1.8}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em}
+  .b-ok{background:rgba(74,222,128,.13);color:var(--ok)}
+  .b-draft{background:rgba(251,191,36,.13);color:var(--warn)}
+  .b-std{background:rgba(94,234,212,.13);color:var(--ac)}
+  .b-A{background:rgba(96,165,250,.15);color:#93c5fd}
+  .b-B{background:rgba(167,139,250,.15);color:#c4b5fd}
+  .b-C{background:rgba(248,113,113,.15);color:#fca5a5}
+  .b-none{background:rgba(120,130,145,.15);color:#94a3b8}
+
+  /* ===== 슬라이드 화면 ===== */
+  #deck{display:none;min-height:100vh;flex-direction:column}
+  #deck.on{display:flex}
+  .topbar{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid var(--line);
+          background:rgba(13,16,20,.85);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+  .back{background:none;border:1px solid var(--line);color:var(--tx2);padding:8px 14px;border-radius:9px;
+        cursor:pointer;font-size:13px;font-family:inherit}
+  .back:hover{border-color:var(--ac2);color:var(--tx)}
+  .dev-name{font-weight:700;font-size:15px}
+  .dev-mixer{color:var(--tx3);font-size:13px}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .prog{color:var(--tx3);font-size:13px;font-variant-numeric:tabular-nums}
+
+  .notice{margin:16px auto 0;max-width:1000px;padding:13px 18px;border-radius:11px;font-size:13.5px;line-height:1.65;
+          border:1px solid rgba(251,191,36,.3);background:rgba(251,191,36,.07);color:#f5d78e}
+  .notice b{color:var(--warn)}
+
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:26px 20px 10px}
+  .slide{
+    width:min(1000px,100%);background:linear-gradient(160deg,#1b2330 0%, #151b24 100%);
+    border:1px solid var(--line);border-radius:20px;padding:clamp(26px,4vw,46px);
+    box-shadow:0 24px 70px rgba(0,0,0,.5); min-height:min(560px,68vh);
+    display:flex;flex-direction:column;
+  }
+  .kicker{color:var(--ac);font-size:12px;font-weight:800;letter-spacing:.18em;margin-bottom:12px}
+  .stitle{font-size:clamp(21px,3.1vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.3}
+  .sbody{margin-top:22px;display:flex;flex-direction:column;gap:13px}
+  .li{display:flex;gap:13px;align-items:flex-start;font-size:15.5px;line-height:1.7;color:#cfd8e3}
+  .num{flex:none;width:25px;height:25px;border-radius:7px;background:rgba(94,234,212,.13);color:var(--ac);
+       font-size:12.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .li b{color:#fff;font-weight:700}
+  .li code{background:#0e141b;border:1px solid var(--line);padding:1px 7px;border-radius:6px;font-size:13.5px;color:var(--ac)}
+  .note{margin-top:auto;padding-top:20px}
+  .note-in{border-left:3px solid var(--ac2);background:rgba(45,212,191,.06);padding:13px 16px;border-radius:0 10px 10px 0;
+           font-size:13.5px;line-height:1.7;color:#a9bcc9}
+  .note-in b{color:var(--ac)}
+  .warnbox{border-left-color:var(--bad);background:rgba(248,113,113,.07);color:#f0b6b6}
+  .warnbox b{color:var(--bad)}
+  .shot{margin-top:20px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b0f14}
+  .shot img{width:100%;display:block}
+  .shot .cap{padding:9px 14px;font-size:12px;color:var(--tx3);border-top:1px solid var(--line)}
+  .shot .miss{padding:26px 18px;text-align:center;color:var(--tx3);font-size:13px;line-height:1.7}
+
+  .svgbox{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:#0e141b;padding:16px 14px}
+  .svgbox svg{width:100%;height:auto;display:block}
+  .drop{position:fixed;inset:0;background:rgba(9,12,16,.94);z-index:200;display:none;align-items:center;justify-content:center;
+        text-align:center;padding:30px}
+  .drop.on{display:flex}
+  .drop .inner{border:2px dashed var(--ac2);border-radius:20px;padding:60px 50px;max-width:560px}
+  .drop h3{font-size:22px;margin-bottom:10px}
+  .drop p{color:var(--tx2);font-size:14px;line-height:1.7}
+  .envcard{width:min(620px,100%);margin-top:22px;border:1px solid rgba(94,234,212,.35);background:rgba(45,212,191,.06);
+           border-radius:var(--r);padding:18px 20px;display:none}
+  .envcard.on{display:block}
+  .envcard h4{font-size:14px;color:var(--ac);margin-bottom:10px;letter-spacing:.02em}
+  .envrow{display:flex;gap:10px;font-size:14px;color:#cfd8e3;padding:4px 0;line-height:1.6}
+  .envrow span:first-child{color:var(--tx3);min-width:74px;flex:none}
+  .envbtns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .ebtn{padding:9px 15px;border-radius:9px;border:1px solid var(--ac2);background:rgba(45,212,191,.12);color:var(--ac);
+        font-size:13px;cursor:pointer;font-family:inherit;font-weight:600}
+  .ebtn:hover{background:rgba(45,212,191,.2)}
+  .ebtn.sub{border-color:var(--line);background:transparent;color:var(--tx2);font-weight:400}
+  .loadbtn{margin-top:16px;background:none;border:1px solid var(--line);color:var(--tx2);padding:10px 18px;border-radius:10px;
+           cursor:pointer;font-size:13.5px;font-family:inherit}
+  .loadbtn:hover{border-color:var(--ac2);color:var(--tx)}
+  .nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:14px 20px 30px}
+  .navbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--tx2);
+          cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .navbtn:hover:not(:disabled){border-color:var(--ac2);color:var(--tx)}
+  .navbtn:disabled{opacity:.3;cursor:default}
+  .dots{display:flex;gap:7px;align-items:center}
+  .dot{width:8px;height:8px;border-radius:50%;background:#2b3542;cursor:pointer;transition:.15s}
+  .dot.on{background:var(--ac);width:22px;border-radius:4px}
+
+  @media print{
+    body{background:#fff;color:#000}
+    .topbar,.nav,#home,.notice{display:none!important}
+    .stage{display:block;padding:0}
+    .slide{page-break-after:always;box-shadow:none;border:1px solid #ccc;background:#fff;color:#000;min-height:auto;margin-bottom:14px}
+    .stitle,.li b{color:#000}.li{color:#222}.kicker{color:#0a7}
+  }
+  @media (max-width:640px){
+    .topbar{flex-wrap:wrap;gap:8px;padding:12px 14px}
+    .dev-mixer{display:none}
+    .slide{padding:22px 18px;min-height:auto}
+    .li{font-size:14.5px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= 검색 ================= -->
+<section id="home">
+  <div class="logo">YUNSEUL ROUTING</div>
+  <h1 class="h1">오디오 인터페이스 이름을 검색하세요</h1>
+  <p class="sub">등록된 기기는 전용 라우팅 절차가, 없는 기기는 표준 공통 절차가 슬라이드로 나옵니다.</p>
+
+  <div class="searchbox">
+    <input id="q" type="text" placeholder="예: iD14, Babyface, Topping, Lewitt…" autocomplete="off" spellcheck="false">
+    <span class="sicon">⏎</span>
+    <div class="ac" id="ac"></div>
+  </div>
+
+  <div class="envcard" id="envCard"></div>
+  <div class="chips" id="chips"></div>
+  <button class="loadbtn" id="loadBtn">진단 결과 파일 불러오기</button>
+  <input type="file" id="fileIn" accept=".txt,.log,.json" style="display:none">
+
+  <p class="foot">
+    방향키 ← → 로 슬라이드 이동 · Esc 로 검색으로 돌아가기 · Ctrl+P 로 인쇄/PDF 저장<br>
+    윤슬 표준 라우팅 기준 · 화면 캡처는 저장소 이미지에서 불러옵니다(인터넷 필요)
+  </p>
+</section>
+
+<!-- ================= 슬라이드 ================= -->
+<div class="drop" id="drop"><div class="inner">
+  <h3>진단 결과 파일을 놓으세요</h3>
+  <p>라우팅 닥터가 만든 <b>routing-check_….txt</b> 파일을 이 창에 끌어다 놓으면<br>연결된 기기와 원컴/투컴 구성을 읽어서 맞는 가이드로 바로 넘어갑니다.</p>
+</div></div>
+
+<section id="deck">
+  <div class="topbar">
+    <button class="back" id="back">← 검색</button>
+    <div>
+      <div class="dev-name" id="dName"></div>
+      <div class="dev-mixer" id="dMixer"></div>
+    </div>
+    <div class="right">
+      <span id="dBadge"></span>
+      <span class="prog" id="prog"></span>
+    </div>
+  </div>
+  <div id="noticeSlot" class="wrap"></div>
+  <div class="stage"><div class="slide" id="slide"></div></div>
+  <div class="nav">
+    <button class="navbtn" id="prev">‹</button>
+    <div class="dots" id="dots"></div>
+    <button class="navbtn" id="next">›</button>
+  </div>
+</section>
+
+<script>
+/* =====================================================================
+   설정
+   ===================================================================== */
+const IMAGE_BASE = "https://raw.githubusercontent.com/yunseulmp3/routing-guides/main/";
+
+/* =====================================================================
+   윤슬 표준 공통 절차 (미등록 기기 폴백 + 모든 기기의 뼈대)
+   ===================================================================== */
+const STD = [
+  {
+    k:"원칙", t:"윤슬 표준 라우팅이란",
+    body:[
+      "<b>재생 채널을 소리 종류별로 쪼갠다.</b> 마이크, 브라우저, 통화가 각자 다른 출력 채널을 쓴다.",
+      "<b>방송에 나갈 소리만 따로 묶는다.</b> 내 귀로 듣는 소리와 방송에 나가는 소리를 분리한다.",
+      "<b>소프트웨어 루프백은 쓰지 않는다.</b> 스테레오 믹스·What U Hear 같은 건 끈다.",
+      "<b>OBS는 소스별로 따로 잡는다.</b> 한 덩어리로 받지 않는다."
+    ],
+    note:"이 네 가지가 전부입니다. 기기가 달라져도 원칙은 같고, <b>어느 메뉴에서 하느냐</b>만 달라집니다."
+  },
+  {
+    k:"1단계", t:"재생 채널 배정",
+    body:[
+      "<b>Playback 1/2 → <code>MIC</code></b> · REAPER에서 처리된 마이크가 나가는 길입니다. REAPER는 ASIO로 이 채널에 직접 출력합니다.",
+      "<b>Playback 3/4 → <code>Chrome</code></b> · 브라우저(유튜브·음원) 소리 전용입니다.",
+      "<b>Playback 5/6 이후 → <code>Discord</code></b>, 그다음 필요한 소스를 순서대로 배정합니다.",
+      "윈도우 장치 이름도 같은 이름으로 바꿔둡니다. 앱에서 고를 때 헷갈리지 않습니다."
+    ],
+    note:"<b>MIC는 윈도우 '재생' 목록에 나타나지 않습니다.</b> REAPER가 ASIO로 하드웨어 채널에 직접 꽂기 때문입니다. 윈도우에서 MIC는 <b>'녹음' 쪽 이름</b>으로 보이고, 디스코드·방송이 그걸 마이크로 물어갑니다."
+  },
+  {
+    k:"2단계", t:"방송용 서브믹스 구성",
+    body:[
+      "방송(루프백)으로 나가는 묶음에는 <b><code>MIC</code>만</b> 올립니다.",
+      "<b>모든 하드웨어 입력은 −∞로 내립니다.</b> 생마이크 입력도 예외 없이 내립니다.",
+      "REAPER를 거친 마이크가 이미 <code>MIC</code>에 실려 있기 때문에, 생마이크가 같이 열려 있으면 소리가 두 번 나갑니다."
+    ],
+    warn:"믹서에서 <b>0.0은 음소거가 아니라 그대로 통과(유니티)</b>입니다. 내린다는 건 슬라이더를 <b>맨 아래 −∞</b>까지 내리는 것입니다. 여기서 사고가 가장 많이 납니다."
+  },
+  {
+    k:"3단계", t:"앱별 출력 지정",
+    body:[
+      "윈도우 <b>설정 → 시스템 → 소리 → 볼륨 믹서</b>에서 앱마다 출력 장치를 지정합니다.",
+      "<b>Chrome → <code>Chrome</code></b>, <b>Discord → <code>Discord</code></b> 로 각각 지정합니다.",
+      "게임은 기본 장치를 쓰거나, 따로 뺄 채널이 있으면 그쪽으로 지정합니다.",
+      "지정한 뒤에는 <b>앱을 완전히 껐다 켜야</b> 반영되는 경우가 많습니다."
+    ],
+    note:"이 단계를 건너뛰면 모든 소리가 기본 장치 한 곳으로 몰려서, 채널을 아무리 잘 나눠도 소용이 없습니다."
+  },
+  {
+    k:"4단계", t:"OBS 소스 구성",
+    body:[
+      "OBS에서 <b>오디오 입력 캡처</b>를 소리 종류마다 하나씩 만듭니다.",
+      "마이크용 소스 → <code>MIC</code> 계열 입력, 브라우저용 소스 → <code>Chrome</code> 계열 입력.",
+      "<b>데스크톱 오디오는 사용하지 않음</b>으로 둡니다. 한 덩어리로 받으면 나중에 소리 하나만 빼는 게 불가능합니다."
+    ],
+    note:"소스를 나눠두면 방송 중에 <b>브라우저 소리만 줄이기</b> 같은 게 가능해집니다."
+  },
+  {
+    k:"마무리", t:"최종 점검",
+    body:[
+      "윈도우 <b>기본 재생·기본 녹음 장치</b>가 오인페로 잡혀 있는지 확인합니다.",
+      "모든 엔드포인트의 <b>샘플레이트를 같은 값으로</b> 맞춥니다. (기기에 따라 44100Hz 고정 필요)",
+      "예전에 쓰던 오인페 장치가 남아 있으면 정리합니다.",
+      "<b>라우팅 닥터</b>를 돌려서 위 항목을 한 번에 확인하고, 결과 파일을 보관합니다."
+    ],
+    note:"세팅이 끝난 시점의 진단 결과를 저장해두면, 나중에 문제가 생겼을 때 <b>무엇이 바뀌었는지</b>를 바로 비교할 수 있습니다."
+  }
+];
+
+/* =====================================================================
+   기기별 데이터
+   status: ready(검증 완료) / draft(자료 확보, 절차 검토 전)
+   ===================================================================== */
+const DEVICES = [
+  {
+    id:"rme", name:"RME Babyface Pro", mixer:"TotalMix FX", status:"ready", grade:"A",
+    alias:["rme","babyface","베이비페이스","바베","babyface pro","fireface","totalmix","토탈믹스","알엠이","베페"],
+    note:"RME 전 기종(Babyface / Fireface) 공통 · TotalMix FX 기준",
+    slides:[
+      {k:"준비", t:"TotalMix FX 열기", body:[
+        "RME 드라이버와 <b>TotalMix FX</b>가 설치되어 있는지 확인합니다.",
+        "TotalMix 화면은 위에서부터 <b>Hardware Inputs / Software Playback / Hardware Outputs</b> 3단입니다.",
+        "이 세 단의 구분이 전부입니다. <b>가운데 단(Software Playback)</b>이 PC에서 나는 소리입니다."
+      ], note:"RME는 <b>출력 서브믹스</b> 방식이라, 어떤 출력을 선택하고 있느냐에 따라 아래 페이더의 의미가 달라집니다. 항상 <b>어느 출력을 잡고 있는지</b> 먼저 확인하세요."},
+      {k:"1단계", t:"재생 채널 이름 배정", body:[
+        "<b>Playback 1/2 → <code>MIC</code></b> (REAPER가 ASIO로 직접 출력)",
+        "<b>Playback 3/4 → <code>Chrome</code></b>",
+        "<b>Playback 5/6 → <code>Discord</code></b>, 이후 필요한 소스를 순서대로",
+        "윈도우 이름은 재생 쪽에 <code>Chrome</code>·<code>Discord</code>, 녹음 쪽에 <code>MIC</code>가 보이면 정상입니다."
+      ], note:"이름 변경은 <b>LoopbackKit</b>으로 한 번에 처리할 수 있습니다. 재생 목록에 MIC가 없어도 정상입니다."},
+      {k:"2단계", t:"방송용 출력 서브믹스", body:[
+        "Hardware Outputs에서 <b>방송으로 보낼 출력</b>을 선택합니다.",
+        "그 상태에서 Software Playback의 <b><code>MIC</code>만 올리고</b>, 나머지는 전부 내립니다.",
+        "<b>Hardware Inputs는 전부 −∞</b>로 내립니다. 생마이크 입력이 여기 포함됩니다."
+      ], warn:"TotalMix에서 <b>0.0dB는 통과(유니티)</b>입니다. 음소거가 아닙니다. 반드시 <b>맨 아래 −∞</b>까지 내리세요."},
+      {k:"3단계", t:"내 모니터링 출력", body:[
+        "헤드폰/스피커 출력을 선택한 뒤, <b>듣고 싶은 소리를 전부</b> 올립니다.",
+        "여기에는 마이크·브라우저·통화가 다 들어가도 됩니다. 방송으로 나가는 건 앞 단계의 서브믹스뿐입니다.",
+        "본인 마이크 모니터링은 취향에 맞게 조절합니다."
+      ], note:"<b>내가 듣는 소리 ≠ 방송에 나가는 소리</b>. 이 분리가 RME 방식의 핵심입니다."},
+      {k:"4단계", t:"저장", body:[
+        "TotalMix 상단 <b>Workspace → Save Workspace As</b>로 현재 상태를 저장합니다.",
+        "Snapshot 슬롯에도 저장해두면 실수로 만졌을 때 즉시 되돌릴 수 있습니다.",
+        "저장 파일은 고객 PC 바탕화면 등 찾기 쉬운 곳에 둡니다."
+      ], note:"저장을 안 하면 드라이버 재설치나 재부팅 후 <b>전부 초기화</b>될 수 있습니다."}
+    ]
+  },
+  {
+    id:"id14", name:"Audient iD14 (iD 시리즈)", mixer:"iD 믹서 앱", status:"ready", grade:"B",
+    alias:["id14","id4","id24","id44","audient","오디언트","아이디14","아이디4","id 14","id-14","아이디십사"],
+    note:"iD4 / iD14 / iD24 / iD44 공통 · iD 믹서 앱 기준",
+    slides:[
+      {k:"경고", t:"먼저: 샘플레이트 44100Hz", body:[
+        "Audient iD 시리즈는 <b>48000Hz에서 출력이 통째로 무음</b>이 되는 사례가 있습니다.",
+        "소리 제어판(<code>mmsys.cpl</code>) → 각 장치 속성 → 고급에서 <b>44100Hz 2채널</b>로 통일합니다.",
+        "재생·녹음 <b>모든 엔드포인트</b>를 빠짐없이 바꿔야 합니다."
+      ], warn:"이 기기에서 <b>소리가 안 난다</b>는 문의의 대부분이 여기입니다. 라우팅을 손대기 전에 이것부터 확인하세요."},
+      {k:"1단계", t:"재생 채널 이름 배정", body:[
+        "<b>Playback 1/2 → <code>MIC</code></b> (REAPER 출력)",
+        "<b>Playback 3/4 → <code>Chrome</code></b>",
+        "<b>이후 채널 → <code>Discord</code></b> 등 순서대로",
+        "윈도우 장치 이름도 동일하게 변경합니다."
+      ]},
+      {k:"2단계", t:"CUE B 경유 구성", body:[
+        "iD 시리즈는 <b>CUE B</b>를 방송용 묶음으로 씁니다.",
+        "iD 믹서 앱에서 <b>CUE B</b>를 선택하고, 여기에 <b><code>MIC</code>만</b> 올립니다.",
+        "<b>하드웨어 입력(생마이크 포함)은 전부 내립니다.</b>",
+        "방송에서 캡처할 입력은 이 CUE B 계열 입력을 지정합니다."
+      ], warn:"믹서의 <b>0.0은 통과</b>입니다. 내린다는 건 <b>−∞</b>까지 내리는 것입니다."},
+      {k:"3단계", t:"모니터링 / 앱 지정", body:[
+        "메인 모니터 출력에는 듣고 싶은 소리를 전부 올립니다.",
+        "볼륨 믹서에서 <b>Chrome → <code>Chrome</code></b>, <b>Discord → <code>Discord</code></b>로 지정합니다.",
+        "지정 후 앱을 완전히 재시작합니다."
+      ]},
+      {k:"마무리", t:"점검", body:[
+        "모든 엔드포인트가 <b>44100Hz</b>인지 다시 확인합니다.",
+        "기본 재생·기본 녹음 장치가 iD로 잡혀 있는지 확인합니다.",
+        "<b>라우팅 닥터</b>를 돌려 결과 파일을 보관합니다."
+      ], note:"라우팅 닥터는 Audient 기기가 44100Hz가 아니면 <b>문제</b>로 잡아줍니다."}
+    ]
+  },
+  {
+    id:"topping-eotg", name:"Topping E4x4 / E OTG", mixer:"Topping 전용 앱", status:"ready", grade:"B",
+    alias:["topping","토핑","e4x4","eotg","e otg","e-otg","이오티지","토핑e"],
+    img:"Topping-e-otg.jpg",
+    note:"전용 Loopback 섹션이 있어 절차가 가장 짧습니다",
+    slides:[
+      {k:"특징", t:"이 기기는 믹스 청소가 필요 없습니다", body:[
+        "Topping E OTG 계열은 <b>전용 Loopback 섹션</b>이 따로 있습니다.",
+        "다른 기기처럼 서브믹스에서 입력을 하나씩 −∞로 내릴 필요가 없습니다.",
+        "<b>드롭다운에서 소스를 고르는 것</b>만으로 끝납니다."
+      ], note:"기기 중에서 세팅이 가장 단순한 축입니다. 그만큼 실수 여지도 적습니다.", img:"Topping-e-otg.jpg", cap:"Topping E OTG 믹서 화면"},
+      {k:"1단계", t:"재생 채널 이름 배정", body:[
+        "<b>Playback 1/2 → <code>MIC</code></b> (REAPER 출력)",
+        "<b>Playback 3/4 → <code>Chrome</code></b>",
+        "<b>이후 채널 → <code>Discord</code></b> 등 순서대로"
+      ]},
+      {k:"2단계", t:"Loopback 소스 지정", body:[
+        "전용 앱의 <b>Loopback 섹션</b>으로 이동합니다.",
+        "<b>Loopback 1+2</b>의 소스 드롭다운을 <b><code>Playback 1/2</code></b>로 지정합니다.",
+        "이것으로 방송에는 <code>MIC</code>만 나가게 됩니다.",
+        "다른 믹스 채널은 <b>건드리지 않아도 됩니다.</b>"
+      ], note:"드롭다운 하나가 다른 기기의 '서브믹스 청소' 전체를 대신합니다."},
+      {k:"3단계", t:"앱 지정 · 점검", body:[
+        "볼륨 믹서에서 <b>Chrome → <code>Chrome</code></b>, <b>Discord → <code>Discord</code></b> 지정.",
+        "OBS는 Loopback 1+2 입력을 마이크 소스로 잡습니다.",
+        "<b>라우팅 닥터</b>로 최종 확인 후 결과 파일 보관."
+      ]}
+    ]
+  },
+  {
+    id:"topping-m62", name:"Topping M62", mixer:"Topping 전용 앱", status:"draft",
+    alias:["m62","엠62","topping m62","토핑m62"], img:"Topping-m62.jpg"
+  },
+  {
+    id:"lewitt6", name:"Lewitt CONNECT 6", mixer:"LEWITT CONTROL CENTER", status:"draft",
+    alias:["lewitt","르윗","레빗","connect 6","connect6","커넥트6","커넥트 6"], img:"Lewitt-Connect 6.jpg"
+  },
+  {
+    id:"minifuse2", name:"Arturia MiniFuse 2", mixer:"MiniFuse Control Center", status:"draft",
+    alias:["arturia","아투리아","아르투리아","minifuse","미니퓨즈","minifuse 2","minifuse2"],
+    img:"Arturia-MiniFuse-2-OTG.webp"
+  },
+  {
+    id:"ssl12", name:"SSL 12", mixer:"SSL 360", status:"draft",
+    alias:["ssl","ssl12","ssl 12","에스에스엘","solid state","solid state logic","솔리드스테이트"],
+    img:"SSL-12.jpg"
+  },
+  {
+    id:"ssl18", name:"SSL 18", mixer:"SSL 360", status:"draft",
+    alias:["ssl18","ssl 18","에스에스엘18"], img:"SSL-18.jpeg"
+  }
+];
+
+
+/* =====================================================================
+   투컴 배선 가이드 (물리 연결)
+   ===================================================================== */
+const SVG_TOPO = `<svg viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+<rect x="18" y="55" width="180" height="92" rx="12" fill="#16202b" stroke="#33404f"/>
+<text x="108" y="88" fill="#e8edf3" font-size="16" font-weight="700" text-anchor="middle">게임PC</text>
+<text x="108" y="112" fill="#8b99aa" font-size="12" text-anchor="middle">게임 소리만</text>
+<text x="108" y="130" fill="#8b99aa" font-size="12" text-anchor="middle">출력 1개로 통합</text>
+<rect x="462" y="55" width="180" height="92" rx="12" fill="#16202b" stroke="#2dd4bf"/>
+<text x="552" y="82" fill="#e8edf3" font-size="16" font-weight="700" text-anchor="middle">방송PC</text>
+<text x="552" y="104" fill="#5eead4" font-size="12" text-anchor="middle">마이크 · 디스코드</text>
+<text x="552" y="121" fill="#5eead4" font-size="12" text-anchor="middle">브라우저 · OBS</text>
+<text x="552" y="138" fill="#8b99aa" font-size="11" text-anchor="middle">여기서 전부 분리</text>
+<path d="M198 101 L455 101" stroke="#2dd4bf" stroke-width="2"/>
+<path d="M446 95 L458 101 L446 107 Z" fill="#2dd4bf"/>
+<rect x="252" y="70" width="152" height="26" rx="7" fill="#0e141b" stroke="#33404f"/>
+<text x="328" y="88" fill="#5eead4" font-size="12.5" text-anchor="middle">오디오 1경로</text>
+<text x="328" y="127" fill="#66748a" font-size="11.5" text-anchor="middle">광 / 아날로그 / HDMI 중 하나</text>
+</svg>`;
+
+const SVG_TREE = `<svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+<rect x="196" y="10" width="268" height="42" rx="9" fill="#16202b" stroke="#2dd4bf"/>
+<text x="330" y="36" fill="#e8edf3" font-size="14" font-weight="700" text-anchor="middle">방송PC 오인페에 광 입력이 있나?</text>
+<path d="M270 52 L150 92" stroke="#4ade80" stroke-width="2"/>
+<path d="M390 52 L510 92" stroke="#66748a" stroke-width="2"/>
+<text x="180" y="72" fill="#4ade80" font-size="12" font-weight="700">있다</text>
+<text x="452" y="72" fill="#8b99aa" font-size="12" font-weight="700">없다</text>
+<rect x="34" y="94" width="232" height="46" rx="9" fill="#16202b" stroke="#4ade80"/>
+<text x="150" y="114" fill="#4ade80" font-size="13.5" font-weight="700" text-anchor="middle">1순위 · 광 SPDIF</text>
+<text x="150" y="131" fill="#8b99aa" font-size="11.5" text-anchor="middle">노이즈 걱정 없음</text>
+<rect x="394" y="94" width="232" height="46" rx="9" fill="#16202b" stroke="#33404f"/>
+<text x="510" y="121" fill="#e8edf3" font-size="13.5" text-anchor="middle">캡처보드를 쓰나?</text>
+<path d="M450 140 L380 186" stroke="#66748a" stroke-width="2"/>
+<path d="M570 140 L580 186" stroke="#66748a" stroke-width="2"/>
+<text x="392" y="168" fill="#8b99aa" font-size="12">쓴다</text>
+<text x="586" y="168" fill="#8b99aa" font-size="12">안 쓴다</text>
+<rect x="262" y="188" width="216" height="46" rx="9" fill="#16202b" stroke="#33404f"/>
+<text x="370" y="208" fill="#e8edf3" font-size="13" text-anchor="middle">HDMI로 오디오까지</text>
+<text x="370" y="225" fill="#8b99aa" font-size="11.5" text-anchor="middle">추가 배선 없음</text>
+<rect x="490" y="188" width="160" height="46" rx="9" fill="#16202b" stroke="#fbbf24"/>
+<text x="570" y="208" fill="#fbbf24" font-size="13" text-anchor="middle">아날로그 라인</text>
+<text x="570" y="225" fill="#8b99aa" font-size="11.5" text-anchor="middle">어디서나 가능</text>
+</svg>`;
+
+const SVG_OPT = `<svg viewBox="0 0 660 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+<text x="20" y="26" fill="#8b99aa" font-size="12.5">TOSLINK 광케이블 · 양쪽 커넥터 모양이 같습니다</text>
+<rect x="40" y="52" width="46" height="40" rx="5" fill="#1c2733" stroke="#5eead4"/>
+<rect x="52" y="62" width="22" height="20" rx="3" fill="#0a0f14" stroke="#2dd4bf"/>
+<path d="M86 72 L574 72" stroke="#33404f" stroke-width="7" stroke-linecap="round"/>
+<path d="M86 72 L574 72" stroke="#5eead4" stroke-width="2" stroke-dasharray="3 9"/>
+<rect x="574" y="52" width="46" height="40" rx="5" fill="#1c2733" stroke="#5eead4"/>
+<rect x="586" y="62" width="22" height="20" rx="3" fill="#0a0f14" stroke="#2dd4bf"/>
+<text x="63" y="112" fill="#e8edf3" font-size="12.5" text-anchor="middle">게임PC</text>
+<text x="63" y="129" fill="#66748a" font-size="11" text-anchor="middle">OPTICAL OUT</text>
+<text x="597" y="112" fill="#e8edf3" font-size="12.5" text-anchor="middle">방송PC 오인페</text>
+<text x="597" y="129" fill="#66748a" font-size="11" text-anchor="middle">OPTICAL IN</text>
+<text x="330" y="112" fill="#4ade80" font-size="12" text-anchor="middle">전기적으로 끊겨 있어 노이즈가 타지 않음</text>
+</svg>`;
+
+const SVG_ANALOG = `<svg viewBox="0 0 660 160" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+<text x="20" y="24" fill="#8b99aa" font-size="12.5">3.5mm 스테레오 → 6.35mm TS 듀얼 (오인페 입력이 55잭일 때)</text>
+<rect x="40" y="58" width="16" height="26" rx="3" fill="#2a3542" stroke="#66748a"/>
+<path d="M20 71 L40 71" stroke="#8b99aa" stroke-width="4" stroke-linecap="round"/>
+<path d="M28 71 h-2 M33 71 h-2" stroke="#0d1014" stroke-width="2"/>
+<path d="M56 71 L300 71" stroke="#33404f" stroke-width="6" stroke-linecap="round"/>
+<path d="M300 71 L420 46" stroke="#33404f" stroke-width="6" stroke-linecap="round"/>
+<path d="M300 71 L420 96" stroke="#33404f" stroke-width="6" stroke-linecap="round"/>
+<rect x="420" y="34" width="22" height="24" rx="3" fill="#2a3542" stroke="#fbbf24"/>
+<rect x="420" y="84" width="22" height="24" rx="3" fill="#2a3542" stroke="#fbbf24"/>
+<path d="M442 46 L470 46 M442 96 L470 96" stroke="#8b99aa" stroke-width="4" stroke-linecap="round"/>
+<text x="500" y="50" fill="#e8edf3" font-size="12.5">오인페 INPUT 1</text>
+<text x="500" y="100" fill="#e8edf3" font-size="12.5">오인페 INPUT 2</text>
+<text x="46" y="104" fill="#e8edf3" font-size="12.5" text-anchor="middle">게임PC</text>
+<text x="46" y="120" fill="#66748a" font-size="11" text-anchor="middle">LINE OUT</text>
+<text x="330" y="140" fill="#fbbf24" font-size="11.5" text-anchor="middle">콤보잭이면 LINE 모드 · 팬텀(48V) 절대 금지</text>
+</svg>`;
+
+const TWOPC_DECK = {
+  id:"twopc", name:"투컴 배선 가이드", mixer:"게임PC ↔ 방송PC 물리 연결", status:"ready", special:true,
+  alias:["투컴","2컴","두컴","두대","dual","듀얼","배선","케이블","연결","현장","사블","soundblaster","sound blaster",
+         "사운드블라스터","블라스터","광","spdif","optical","toslink","라인인","line in","캡처보드","캡처카드"],
+  slides:[
+    {k:"원칙", t:"투컴은 '어디서 나누느냐'가 전부입니다", body:[
+      "<b>게임PC는 게임 소리만</b> 넘깁니다. 출력 하나로 통합해서 보냅니다.",
+      "<b>디스코드·마이크·브라우저는 방송PC</b>에서 돌립니다.",
+      "분리(채널 나누기)는 <b>전부 방송PC 오인페</b>에서 합니다.",
+      "게임PC에서 통화까지 돌리면 게임 소리와 통화가 <b>한 덩어리로 섞여서</b> 넘어옵니다. 방송PC에서는 되돌릴 방법이 없습니다."
+    ], svg:"TOPO",
+     note:"이 구조로 가면 게임PC 쪽 세팅이 거의 사라집니다. <b>사운드 블라스터처럼 채널을 못 쪼개는 기기</b>를 써도 문제가 되지 않는 이유입니다."},
+
+    {k:"선택", t:"연결 방식 고르기", body:[
+      "<b>광(SPDIF) 입력이 있으면 광이 1순위</b>입니다. RME·Audient 계열은 대부분 있습니다.",
+      "광이 없고 <b>캡처보드를 이미 쓴다면</b> HDMI로 소리까지 함께 받으면 됩니다.",
+      "둘 다 아니면 <b>아날로그 라인</b>으로 갑니다. 어떤 장비에서도 되는 대신 노이즈 관리가 필요합니다."
+    ], svg:"TREE",
+     note:"지연은 광·아날로그 모두 <b>사실상 0</b>입니다. HDMI는 캡처보드 지연이 있지만 영상과 같이 늦어지므로 입 모양은 맞습니다."},
+
+    {k:"1순위", t:"광 SPDIF 연결", body:[
+      "필요한 것: <b>TOSLINK 광케이블</b> 1개. 양쪽 커넥터 모양이 같은 사각 단자입니다.",
+      "게임PC의 <b>OPTICAL OUT</b> → 방송PC 오인페의 <b>OPTICAL IN</b>에 꽂습니다.",
+      "빨간 불빛이 보이면 신호가 나가는 중입니다. 커넥터의 <b>투명 보호캡</b>을 빼고 꽂으세요.",
+      "양쪽 <b>샘플레이트를 같은 값</b>으로 맞추고, 오인페 클럭 소스를 <b>Optical/SPDIF</b>로 지정합니다."
+    ], svg:"OPT",
+     warn:"클럭을 안 맞추면 <b>몇 초에 한 번씩 '틱' 소리</b>가 납니다. 소리가 나긴 나는데 잡음이 섞이면 대부분 클럭 문제입니다."},
+
+    {k:"차선", t:"아날로그 라인 연결", body:[
+      "필요한 것: <b>3.5mm 스테레오 → 6.35mm TS 듀얼</b> 케이블. 오인페 입력이 RCA면 3.5mm → RCA 듀얼.",
+      "게임PC의 <b>라인 아웃(초록)</b> 또는 사블 라인 아웃 → 방송PC 오인페 <b>입력 1·2</b>.",
+      "오인페 입력을 <b>LINE 모드</b>로 둡니다. 인스트(Hi-Z) 모드가 아닙니다.",
+      "<b>게임PC 볼륨은 100% 고정</b>하고, 크기 조절은 방송PC 게인 노브로만 합니다."
+    ], svg:"ANALOG",
+     warn:"<b>팬텀 파워(48V)는 절대 켜지 마세요.</b> 게임PC 출력단이 상할 수 있습니다. 그리고 지지직거리는 소리가 나면 그라운드 루프입니다 — 두 PC를 <b>같은 멀티탭</b>에 꽂고, 그래도 남으면 아이솔레이터를 넣습니다."},
+
+    {k:"대안", t:"HDMI 캡처보드로 받기", body:[
+      "게임PC <b>HDMI OUT</b> → 캡처보드 <b>IN</b>, 캡처보드 <b>OUT(패스스루)</b> → 게임PC 모니터.",
+      "게임PC의 기본 재생 장치를 <b>캡처보드</b>로 지정해야 소리가 넘어갑니다.",
+      "OBS에서 캡처보드 오디오를 <b>별도 소스</b>로 잡습니다.",
+      "게임PC에서도 소리를 들으려면 모니터 스피커나 사블을 따로 씁니다."
+    ], note:"캡처보드 오디오를 <b>윈도우 기본 녹음 장치로 지정하지 마세요.</b> 다른 앱이 물어가서 이중으로 나갑니다."},
+
+    {k:"사블", t:"Sound Blaster를 쓴다면", body:[
+      "Creative App에서 <b>SBX · Crystalizer · Smart Volume · Scout Mode를 전부 끕니다.</b> 기본으로 켜져 있고, 방송 소리를 출렁이게 만듭니다.",
+      "녹음 장치의 <b>What U Hear</b>는 사용 안 함으로 끕니다. 켜두면 소리가 두 번 나갑니다.",
+      "소리 제어판에서 <b>모든 엔드포인트의 샘플레이트를 통일</b>합니다.",
+      "광 출력은 기기에 따라 <b>44.1kHz를 지원하지 않는</b> 경우가 있습니다."
+    ], warn:"방송PC 오인페가 <b>Audient iD 계열(44.1kHz 고정)</b>이면 사블 광 출력과 샘플레이트가 안 맞을 수 있습니다. 이 조합은 <b>아날로그 라인</b>으로 가는 편이 확실합니다."},
+
+    {k:"확인", t:"연결 후 점검", body:[
+      "<b>양쪽 PC에서 각각</b> 라우팅 닥터를 돌립니다. (게임PC용 / 방송PC용 실행 파일이 따로 있습니다)",
+      "게임PC에서 유튜브를 틀고, 방송PC 오인페 <b>입력 레벨이 움직이는지</b> 봅니다.",
+      "아무 소리도 안 낼 때 <b>노이즈가 올라오는지</b> 확인합니다. 올라오면 그라운드 루프입니다.",
+      "OBS에서 게임 소리를 <b>별도 소스</b>로 잡고, 마이크와 따로 조절되는지 확인합니다."
+    ], note:"두 PC의 진단 결과 파일을 모두 보관해두면, 나중에 문제가 생겼을 때 <b>어느 쪽이 바뀌었는지</b> 바로 비교할 수 있습니다."}
+  ]
+};
+
+const SB_DECK = {
+  id:"soundblaster", name:"Sound Blaster (G6 / X3 / AE 시리즈)", mixer:"Creative App · Sound Blaster Command",
+  status:"ready",
+  alias:["사블","사운드블라스터","블라스터","soundblaster","sound blaster","creative","크리에이티브","g6","x3","x4",
+         "ae5","ae-5","ae7","ae9","gc7","katana","xfi","x-fi"],
+  slides:[
+    {k:"위치", t:"이 기기는 게임PC 담당입니다", body:[
+      "사운드 블라스터는 <b>재생 엔드포인트가 2개 안팎</b>이라, 오인페처럼 앱별로 채널을 쪼갤 수 없습니다.",
+      "그래서 <b>게임PC에서 소리를 내보내는 역할</b>까지만 맡기고, 분리는 방송PC 오인페에서 합니다.",
+      "<b>디스코드는 방송PC에서</b> 돌립니다. 게임PC에서 통화까지 돌리면 게임 소리와 섞여서 되돌릴 수 없습니다.",
+      "배선 방법은 <b>투컴 배선 가이드</b>를 보세요."
+    ], note:"이 구조로 가면 사블의 채널 분리 한계가 <b>아예 문제가 되지 않습니다.</b>"},
+
+    {k:"필수", t:"드라이버 음장 전부 끄기", body:[
+      "Creative App(또는 Sound Blaster Command)을 엽니다.",
+      "<b>SBX / Surround / Crystalizer / Bass / Smart Volume / Dialog+</b> 를 전부 끕니다.",
+      "<b>Scout Mode</b>도 끕니다. 게임 소리를 인위적으로 부풀립니다.",
+      "가능하면 <b>Direct 모드</b>로 둡니다."
+    ], warn:"이 항목들은 <b>기본으로 켜져 있습니다.</b> 켜둔 채로 방송하면 소리가 출렁이고 뭉개집니다. 라우팅보다 먼저 확인할 항목입니다."},
+
+    {k:"필수", t:"What U Hear 끄기 · 샘플레이트", body:[
+      "소리 제어판(<code>mmsys.cpl</code>) → 녹음 탭에서 <b>What U Hear</b>를 사용 안 함으로 바꿉니다.",
+      "이 장치는 마이크가 아니라 <b>PC에서 나는 소리 전체를 되받는</b> 입력이라, 켜두면 소리가 두 번 나갑니다.",
+      "재생·녹음 <b>모든 엔드포인트의 샘플레이트를 통일</b>합니다. (보통 48000Hz)",
+      "광 출력으로 연결할 때는 방송PC 오인페와 <b>같은 값</b>이어야 합니다."
+    ], warn:"광 출력이 <b>44.1kHz를 지원하지 않는</b> 기기가 있습니다. 방송PC가 <b>Audient iD 계열(44.1kHz 고정)</b>이면 광 대신 <b>아날로그 라인</b>으로 가세요."}
+  ]
+};
+DEVICES.push(SB_DECK);
+
+const SVGS = {TOPO:SVG_TOPO, TREE:SVG_TREE, OPT:SVG_OPT, ANALOG:SVG_ANALOG};
+DEVICES.push(TWOPC_DECK);
+
+/* =====================================================================
+   검색 로직
+   ===================================================================== */
+const norm = s => (s||"").toLowerCase().replace(/[\s\-_()\/+.]/g,"");
+
+function search(qs){
+  const q = norm(qs);
+  if(!q) return [];
+  const hit = [];
+  for(const d of DEVICES){
+    const keys = [d.name, d.id, ...(d.alias||[])].map(norm);
+    let score = 99;
+    for(const k of keys){
+      if(k === q) score = Math.min(score,0);
+      else if(k.startsWith(q)) score = Math.min(score,1);
+      else if(k.includes(q)) score = Math.min(score,2);
+      else if(q.length>=3 && q.includes(k) && k.length>=3) score = Math.min(score,3);
+    }
+    if(score < 99) hit.push({d,score});
+  }
+  hit.sort((a,b)=> a.score-b.score || a.d.name.localeCompare(b.d.name));
+  return hit.map(h=>h.d);
+}
+
+/* =====================================================================
+   슬라이드 구성
+   ===================================================================== */
+function envSlide(){
+  if(!ENV || (!ENV.problems.length && !ENV.warns.length)) return null;
+  const body = [];
+  ENV.problems.forEach(t => body.push('<b style="color:#f87171">문제</b> · ' + t));
+  ENV.warns.slice(0,5).forEach(t => body.push('<b style="color:#fbbf24">주의</b> · ' + t));
+  if(ENV.warns.length > 5) body.push('그 외 주의 ' + (ENV.warns.length-5) + '건은 진단 결과 파일에서 확인하세요.');
+  return {
+    k:"이 PC 진단 결과", t:"먼저 이것부터 확인하세요",
+    body: body,
+    note: (ENV.pc? '<b>'+ENV.pc+'</b> · ':'') + setupLabel(ENV) + (ENV.time? ' · '+ENV.time : '')
+        + '<br>아래 절차를 따라가면서 위 항목이 해결되는지 함께 확인하세요.'
+  };
+}
+
+function buildSlides(dev){
+  const head = envSlide();
+  if(dev && dev.slides && dev.slides.length) return head ? [head, ...dev.slides] : dev.slides;
+  const base = JSON.parse(JSON.stringify(STD));
+  if(dev && dev.img){
+    base.splice(1,0,{
+      k:"참고 자료", t:dev.name+" 믹서 화면",
+      body:["보유 중인 이 기기의 믹서 소프트웨어 화면입니다.",
+            "아래 표준 절차를 <b>이 화면에서 어디에 해당하는지</b> 찾아가며 진행합니다."],
+      img:dev.img, cap:dev.name+" 믹서 소프트웨어",
+      note:"이 기기는 <b>전용 절차가 아직 검토 전</b>입니다. 표준 원리대로 대응하세요."
+    });
+  }
+  return head ? [head, ...base] : base;
+}
+
+/* =====================================================================
+   화면 제어
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+let cur = {dev:null, slides:[], i:0};
+
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function imgURL(f){ return IMAGE_BASE + encodeURIComponent(f); }
+
+function renderSlide(){
+  const s = cur.slides[cur.i];
+  let h = '<div class="kicker">'+esc(s.k||"")+'</div><h2 class="stitle">'+esc(s.t||"")+'</h2>';
+  if(s.body && s.body.length){
+    h += '<div class="sbody">';
+    s.body.forEach((b,i)=>{ h += '<div class="li"><span class="num">'+(i+1)+'</span><span>'+b+'</span></div>'; });
+    h += '</div>';
+  }
+  if(s.svg && SVGS[s.svg]){ h += '<div class="svgbox">'+SVGS[s.svg]+'</div>'; }
+  if(s.img){
+    h += '<div class="shot">'
+       + '<img src="'+imgURL(s.img)+'" alt="" style="display:none" '
+       + 'onload="this.style.display=\'block\';var m=this.parentNode.querySelector(&quot;.miss&quot;);if(m)m.remove()">'
+       + '<div class="miss">화면 캡처를 불러오는 중입니다.<br>인터넷이 연결되어 있지 않으면 표시되지 않습니다.<br><span style="color:#4b5666">'+esc(s.img)+'</span></div>'
+       + (s.cap? '<div class="cap">'+esc(s.cap)+'</div>':'') + '</div>';
+  }
+  if(s.warn) h += '<div class="note"><div class="note-in warnbox">'+s.warn+'</div></div>';
+  else if(s.note) h += '<div class="note"><div class="note-in">'+s.note+'</div></div>';
+  $("#slide").innerHTML = h;
+
+  $("#prog").textContent = (cur.i+1)+" / "+cur.slides.length;
+  $("#prev").disabled = cur.i===0;
+  $("#next").disabled = cur.i===cur.slides.length-1;
+  $("#dots").innerHTML = cur.slides.map((_,i)=>'<span class="dot'+(i===cur.i?" on":"")+'" data-i="'+i+'"></span>').join("");
+  $("#slide").scrollIntoView({block:"nearest"});
+}
+
+function openDeck(dev, rawQuery){
+  cur.dev = dev;
+  cur.slides = buildSlides(dev);
+  cur.i = 0;
+
+  $("#dName").textContent = dev ? dev.name : "윤슬 표준 공통 절차";
+  $("#dMixer").textContent = dev ? (dev.mixer||"") : "등록되지 않은 기기";
+
+  let badge = '<span class="badge b-std">표준 절차</span>';
+  if(dev && dev.status==="ready") badge = '<span class="badge b-ok">전용 절차</span>';
+  else if(dev && dev.status==="draft") badge = '<span class="badge b-draft">검토 전</span>';
+  const GR = {
+    A:{t:'A급 · 다중 서브믹스', d:'출력마다 독립 믹스 + 자유 루프백. <b>방송·노래방·합주용 루프백을 동시에</b> 운영할 수 있습니다.'},
+    B:{t:'B급 · 루프백 1개',   d:'루프백이 하나뿐이라 용도별로 나눌 수 없습니다. <b>방송용 하나만</b> 구성합니다.'},
+    C:{t:'C급 · 고정 혼합',    d:'입력과 재생이 무조건 섞여 나가 <b>윤슬 표준을 적용할 수 없습니다.</b> 기기 교체가 필요합니다.'}
+  };
+  const g = dev && dev.grade;
+  if (g && GR[g]) badge = '<span class="badge b-'+g+'">'+GR[g].t+'</span> ' + badge;
+  $("#dBadge").innerHTML = badge;
+
+  let notice = "";
+  if(!dev){
+    notice = '<b>'+esc(rawQuery||"")+' 는 아직 등록되지 않은 기기입니다.</b> 아래는 기기와 무관한 윤슬 표준 공통 절차입니다. '
+           + '믹서 앱에서 같은 원리에 해당하는 메뉴를 찾아 적용하세요.';
+  } else if(dev.status==="draft"){
+    notice = '<b>이 기기는 전용 절차가 아직 검토 전입니다.</b> 참고 화면과 표준 공통 절차를 함께 보여드립니다. '
+           + '실제 적용 전 믹서 앱에서 한 번 확인이 필요합니다.';
+  }
+  if (g && GR[g] && g !== 'A') {
+    notice = (notice ? notice + '<br><br>' : '') + '<b>'+GR[g].t+'</b> — ' + GR[g].d;
+  }
+  $("#noticeSlot").innerHTML = notice ? '<div class="notice">'+notice+'</div>' : "";
+
+  $("#home").style.display = "none";
+  $("#deck").classList.add("on");
+  renderSlide();
+}
+
+function goHome(){
+  $("#deck").classList.remove("on");
+  $("#home").style.display = "flex";
+  $("#q").value = ""; $("#ac").classList.remove("on"); $("#chips").classList.remove("dim");
+  $("#q").focus();
+}
+
+function move(d){
+  const n = cur.i + d;
+  if(n<0 || n>=cur.slides.length) return;
+  cur.i = n; renderSlide();
+}
+
+/* ---- 자동완성 ---- */
+let acList = [], acSel = -1;
+function renderAC(list){
+  acList = list; acSel = -1;
+  if(!list.length){ $("#ac").classList.remove("on"); $("#chips").classList.remove("dim"); return; }
+  $("#chips").classList.add("dim");
+  $("#ac").innerHTML = list.map((d,i)=>{
+    const b = d.status==="ready" ? '<span class="badge b-ok">전용</span>' : '<span class="badge b-draft">검토 전</span>';
+    return '<div class="ac-item" data-i="'+i+'"><span class="ac-name">'+esc(d.name)+'</span>'+b+'<span class="ac-meta">'+esc(d.mixer||"")+'</span></div>';
+  }).join("");
+  $("#ac").classList.add("on");
+}
+function selAC(n){
+  acSel = n;
+  [...document.querySelectorAll(".ac-item")].forEach((el,i)=>el.classList.toggle("sel", i===n));
+}
+
+$("#q").addEventListener("input", e => renderAC(search(e.target.value)));
+$("#q").addEventListener("keydown", e => {
+  if(e.key==="ArrowDown"){ e.preventDefault(); if(acList.length) selAC((acSel+1)%acList.length); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); if(acList.length) selAC((acSel-1+acList.length)%acList.length); }
+  else if(e.key==="Enter"){
+    const v = $("#q").value.trim();
+    if(acSel>=0 && acList[acSel]) openDeck(acList[acSel]);
+    else if(acList.length===1) openDeck(acList[0]);
+    else if(acList.length>1) openDeck(acList[0]);
+    else if(v) openDeck(null, v);
+  }
+  else if(e.key==="Escape"){ $("#ac").classList.remove("on"); $("#chips").classList.remove("dim"); }
+});
+$("#ac").addEventListener("click", e => {
+  const it = e.target.closest(".ac-item");
+  if(it) openDeck(acList[+it.dataset.i]);
+});
+$("#chips").innerHTML = DEVICES.map(d=>'<span class="chip" data-id="'+d.id+'">'+esc(d.name)+'</span>').join("")
+  + '<span class="chip" data-id="__std">표준 공통 절차</span>';
+$("#chips").addEventListener("click", e=>{
+  const c = e.target.closest(".chip"); if(!c) return;
+  if(c.dataset.id==="__std") openDeck(null, "");
+  else openDeck(DEVICES.find(d=>d.id===c.dataset.id));
+});
+
+$("#back").addEventListener("click", goHome);
+$("#prev").addEventListener("click", ()=>move(-1));
+$("#next").addEventListener("click", ()=>move(1));
+$("#dots").addEventListener("click", e=>{ const d=e.target.closest(".dot"); if(d){ cur.i=+d.dataset.i; renderSlide(); } });
+document.addEventListener("keydown", e=>{
+  if(!$("#deck").classList.contains("on")) return;
+  if(e.key==="ArrowRight"||e.key===" ") { e.preventDefault(); move(1); }
+  else if(e.key==="ArrowLeft") move(-1);
+  else if(e.key==="Escape") goHome();
+});
+/* 모바일 스와이프 */
+let tx=0;
+document.addEventListener("touchstart",e=>{tx=e.changedTouches[0].clientX},{passive:true});
+document.addEventListener("touchend",e=>{
+  if(!$("#deck").classList.contains("on")) return;
+  const dx = e.changedTouches[0].clientX - tx;
+  if(Math.abs(dx)>60) move(dx<0?1:-1);
+},{passive:true});
+
+
+/* =====================================================================
+   진단 결과(라우팅 닥터) 읽기
+   ===================================================================== */
+let ENV = null;
+
+function parseReport(text){
+  const env = {setup:null, pc:null, time:null, ifaces:[], caps:[], virtuals:[],
+               problems:[], warns:[], defR:null, defC:null, ok:false, match:null};
+  const m = text.match(/=== YS-DATA[^\n]*\n([\s\S]*?)===\s*\/YS-DATA\s*===/);
+  if(m){
+    env.ok = true;
+    m[1].split(/\r?\n/).forEach(l=>{
+      const i = l.indexOf('='); if(i < 0) return;
+      const k = l.slice(0,i).trim(), v = l.slice(i+1).trim();
+      if(k==='setup') env.setup = v;
+      else if(k==='pc') env.pc = v;
+      else if(k==='time') env.time = v;
+      else if(k==='iface' || k==='capcard' || k==='virtual'){
+        const c = v.split('|');
+        const o = {kind:c[0]||'', name:c[1]||'', hw:c[2]||'', rates:c[3]||'', act:c[4]||''};
+        o.active = parseInt((o.act.split('/')[0]||'0'),10) > 0;
+        if(k==='iface') env.ifaces.push(o);
+        else if(k==='capcard') env.caps.push(o);
+        else env.virtuals.push(o);
+      }
+      else if(k==='problem') env.problems.push(v);
+      else if(k==='warn') env.warns.push(v);
+      else if(k==='defaultRender') env.defR = (v.split('|')[0]||'');
+      else if(k==='defaultCapture') env.defC = (v.split('|')[0]||'');
+    });
+  }
+  const live = env.ifaces.filter(i=>i.active);
+  const pool = live.length ? live.map(i=>i.name+' '+i.hw).join(' ')
+             : (env.ifaces.length ? env.ifaces.map(i=>i.name+' '+i.hw).join(' ') : text);
+  const np = norm(pool);
+  let best = null, bestLen = 0;
+  for(const d of DEVICES){
+    if(d.special) continue;
+    for(const k of [d.name, ...(d.alias||[])]){
+      const nk = norm(k);
+      if(nk.length >= 3 && np.includes(nk) && nk.length > bestLen){ best = d; bestLen = nk.length; }
+    }
+  }
+  env.match = best;
+  env.two = (env.setup === 'Stream' || env.setup === 'Game') || env.caps.length > 0;
+  return env;
+}
+
+function setupLabel(e){
+  if(e.setup === 'Stream') return '투컴 · 방송PC';
+  if(e.setup === 'Game')   return '투컴 · 게임PC';
+  if(e.caps.length)        return '투컴으로 보임 (캡처보드 있음)';
+  return '단일 PC (원컴)';
+}
+
+function showEnv(env){
+  ENV = env;
+  const live = env.ifaces.filter(i=>i.active);
+  const names = live.length ? live.map(i=>i.name + (i.rates? ' · '+i.rates+'Hz':'')).join(', ')
+                            : '활성 오인페 없음';
+  let h = '<h4>진단 결과를 읽었습니다'+(env.pc? ' — '+esc(env.pc):'')+'</h4>';
+  h += '<div class="envrow"><span>구성</span><span>'+esc(setupLabel(env))+'</span></div>';
+  h += '<div class="envrow"><span>오인페</span><span>'+esc(names)+'</span></div>';
+  if(env.caps.length) h += '<div class="envrow"><span>캡처보드</span><span>'+esc(env.caps.map(c=>c.name).join(', '))+'</span></div>';
+  h += '<div class="envrow"><span>진단</span><span>'
+     + (env.problems.length? '<b style="color:#f87171">문제 '+env.problems.length+'건</b> · ':'')
+     + '주의 '+env.warns.length+'건</span></div>';
+  h += '<div class="envbtns">';
+  if(env.match) h += '<button class="ebtn" data-go="dev">'+esc(env.match.name)+' 가이드 열기</button>';
+  else h += '<button class="ebtn" data-go="std">표준 공통 절차 열기</button>';
+  if(env.two) h += '<button class="ebtn sub" data-go="two">투컴 배선 가이드</button>';
+  h += '<button class="ebtn sub" data-go="clear">해제</button></div>';
+  const c = $("#envCard");
+  c.innerHTML = h; c.classList.add("on");
+}
+
+$("#envCard").addEventListener("click", e=>{
+  const b = e.target.closest("[data-go]"); if(!b) return;
+  const g = b.dataset.go;
+  if(g==="dev") openDeck(ENV.match);
+  else if(g==="std") openDeck(null, "");
+  else if(g==="two") openDeck(DEVICES.find(d=>d.id==="twopc"));
+  else { ENV=null; $("#envCard").classList.remove("on"); }
+});
+
+function readReport(file){
+  const r = new FileReader();
+  r.onload = () => {
+    const env = parseReport(String(r.result||""));
+    showEnv(env);
+    if(env.match) openDeck(env.match);
+    else if(env.two) openDeck(DEVICES.find(d=>d.id==="twopc"));
+    else openDeck(null, "");
+  };
+  r.readAsText(file, "utf-8");
+}
+
+/* 드래그 & 드롭 */
+let dragDepth = 0;
+window.addEventListener("dragenter", e=>{ e.preventDefault(); dragDepth++; $("#drop").classList.add("on"); });
+window.addEventListener("dragover", e=>{ e.preventDefault(); });
+window.addEventListener("dragleave", e=>{ e.preventDefault(); if(--dragDepth<=0){ dragDepth=0; $("#drop").classList.remove("on"); } });
+window.addEventListener("drop", e=>{
+  e.preventDefault(); dragDepth=0; $("#drop").classList.remove("on");
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) readReport(f);
+});
+$("#loadBtn").addEventListener("click", ()=> $("#fileIn").click());
+$("#fileIn").addEventListener("change", e=>{ if(e.target.files[0]) readReport(e.target.files[0]); });
+
+$("#q").focus();
+</script>
+</body>
+</html>
