@@ -29,7 +29,7 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
-$ScriptVersion = '2.1'
+$ScriptVersion = '2.2'
 
 # =====================================================================
 # 0. 윤슬 표준 정의 (여기만 고치면 판정 기준이 바뀝니다)
@@ -78,18 +78,22 @@ $VendorByName = @(
     @{ Name = 'Vocaster';       Brand = 'Focusrite';         Mixer = 'Focusrite Control' }
     @{ Name = 'Topping';        Brand = 'Topping';           Mixer = 'Topping 전용 앱'; Grade = 'B' }
     @{ Name = 'Lewitt';         Brand = 'Lewitt';            Mixer = 'CONTROL CENTER' }
-    @{ Name = 'CONNECT 6';      Brand = 'Lewitt';            Mixer = 'CONTROL CENTER' }
-    @{ Name = 'MOTU';           Brand = 'MOTU';              Mixer = 'MOTU 웹 콘솔' }
-    @{ Name = 'Steinberg';      Brand = 'Steinberg';         Mixer = 'dspMixFx'; Grade = 'C' }
-    @{ Name = 'Yamaha';         Brand = 'Yamaha';            Mixer = 'Yamaha 유틸'; Grade = 'C' }
+    @{ Name = 'CONNECT 6';      Brand = 'Lewitt';            Mixer = 'CONTROL CENTER'; Grade = 'B' }
+    @{ Name = 'CONNECT 2';      Brand = 'Lewitt';            Mixer = 'CONTROL CENTER'; Grade = 'C' }
+    @{ Name = 'MOTU';           Brand = 'MOTU';              Mixer = 'MOTU 앱'; Grade = 'C' }
+    @{ Name = 'Steinberg';      Brand = 'Steinberg';         Mixer = 'dspMixFx' }
+    @{ Name = 'Yamaha';         Brand = 'Yamaha';            Mixer = 'Yamaha 유틸' }
     @{ Name = 'PreSonus';       Brand = 'PreSonus';          Mixer = 'UC Surface' }
     @{ Name = 'Behringer';      Brand = 'BEHRINGER';         Mixer = '제조사 유틸' }
     @{ Name = 'UMC';            Brand = 'BEHRINGER';         Mixer = '제조사 유틸' }
     @{ Name = 'Arturia';        Brand = 'Arturia';           Mixer = 'Arturia 소프트웨어 센터' }
     @{ Name = 'MiniFuse';       Brand = 'Arturia';           Mixer = 'Arturia 소프트웨어 센터' }
-    @{ Name = 'Universal Audio';Brand = 'Universal Audio';   Mixer = 'UA Console' }
-    @{ Name = 'Volt';           Brand = 'Universal Audio';   Mixer = 'UA Console' }
+    @{ Name = 'Universal Audio';Brand = 'Universal Audio';   Mixer = 'UA Console'; Grade = 'C' }
+    @{ Name = 'Apollo';         Brand = 'Universal Audio';   Mixer = 'UA Console'; Grade = 'C' }
+    @{ Name = 'Apogee';         Brand = 'Apogee';            Mixer = '제조사 앱'; Grade = 'C' }
+    @{ Name = 'Volt';           Brand = 'Universal Audio';   Mixer = 'UA Console'; Grade = 'C' }
     @{ Name = 'Antelope';       Brand = 'Antelope';          Mixer = 'Antelope Launcher' }
+    @{ Name = 'SSL 2';          Brand = 'SSL';               Mixer = 'SSL 360'; Grade = 'C' }
     @{ Name = 'Solid State';    Brand = 'SSL';               Mixer = 'SSL 360' }
     @{ Name = 'SSL 2';          Brand = 'SSL';               Mixer = 'SSL 360' }
     @{ Name = 'Elgato';         Brand = 'Elgato';            Mixer = 'Wave Link' }

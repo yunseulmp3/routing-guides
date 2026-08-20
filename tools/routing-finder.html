@@ -396,8 +396,45 @@ const DEVICES = [
     alias:["m62","엠62","topping m62","토핑m62"], img:"Topping-m62.jpg"
   },
   {
-    id:"lewitt6", name:"Lewitt CONNECT 6", mixer:"LEWITT CONTROL CENTER", status:"draft",
-    alias:["lewitt","르윗","레빗","connect 6","connect6","커넥트6","커넥트 6"], img:"Lewitt-Connect 6.jpg"
+    id:"lewitt6", name:"Lewitt CONNECT 6", mixer:"LEWITT CONTROL CENTER", status:"draft", grade:"B",
+    alias:["lewitt","르윗","레빗","connect 6","connect6","커넥트6","커넥트 6"], img:"Lewitt-Connect 6.jpg",
+    note:"공식 온라인 가이드 기준으로 만든 초안 · 실물 검증 전",
+    slides:[
+      {k:"구조", t:"이 기기가 가진 것", body:[
+        "<b>재생 채널 3쌍</b> — 윈도우에 <code>1/2</code>, <code>3/4</code>, <code>5/6</code>으로 보입니다. 앱마다 나눠 쓰기 충분합니다.",
+        "<b>서브믹스 2개</b> — CONTROL CENTER에 <b>Mix A</b>와 <b>Mix B</b>가 있습니다. 채널마다 두 믹스로 보내는 페이더가 따로 있습니다.",
+        "<b>루프백 있음</b> — 소스를 고를 수 있습니다.",
+        "믹서 앱 구성: Global / Inputs / Master mixes / Software outputs / Hardware outputs"
+      ], img:"Lewitt-Connect 6.jpg", cap:"LEWITT CONTROL CENTER",
+       warn:"<b>여기까지는 매뉴얼로 확인한 내용입니다.</b> 아래 절차는 그 구조에 윤슬 표준을 얹은 초안이라, 실물에서 한 번 확인이 필요합니다."},
+
+      {k:"1단계", t:"재생 채널 배정", body:[
+        "<b>1/2 → <code>MIC</code></b> — REAPER가 ASIO로 출력하는 채널",
+        "<b>3/4 → <code>Chrome</code></b>",
+        "<b>5/6 → <code>Discord</code></b>",
+        "윈도우 장치 이름도 같은 이름으로 바꿉니다 (LoopbackKit)."
+      ], note:"재생이 3쌍이라 <b>MIC / Chrome / Discord</b>까지 딱 맞습니다. 더 나눌 소스가 있으면 우선순위를 정해야 합니다."},
+
+      {k:"2단계", t:"방송용 믹스 구성", body:[
+        "<b>Mix B</b>를 방송용으로 정합니다. (Mix A는 본인 모니터링용)",
+        "Mix B에는 <b><code>MIC</code>만</b> 올리고 나머지 재생 채널은 내립니다.",
+        "<b>하드웨어 입력(생마이크)은 Mix B에서 −∞</b>로 내립니다.",
+        "<b>루프백 소스를 Mix B로</b> 지정합니다. 그래야 방송·통화 앱이 그 믹스를 마이크로 물어갑니다."
+      ], warn:"<b>확인 필요</b> — 루프백 소스로 Mix B를 고를 수 있는지, 아니면 고정인지가 매뉴얼에 명확하지 않습니다. 고를 수 없다면 방송용을 Mix A/B 중 지정된 쪽에 맞춰야 합니다."},
+
+      {k:"3단계", t:"모니터링 · 앱 지정", body:[
+        "<b>Mix A</b>에는 듣고 싶은 소리를 전부 올립니다. 헤드폰 출력이 이걸 받습니다.",
+        "볼륨 믹서에서 <b>Chrome → <code>Chrome</code></b>, <b>Discord → <code>Discord</code></b> 지정.",
+        "지정 후 앱을 완전히 재시작합니다."
+      ]},
+
+      {k:"마무리", t:"점검", body:[
+        "샘플레이트를 전 엔드포인트 같은 값으로 통일합니다.",
+        "기본 재생·녹음 장치가 CONNECT 6로 잡혀 있는지 확인합니다.",
+        "<b>라우팅 닥터</b>를 돌려 결과 파일을 보관합니다.",
+        "<b>실물 확인 결과를 알려주시면 이 절차를 '전용 절차'로 승격합니다.</b>"
+      ], note:"확인할 것 — ① 루프백 소스 선택 가능 여부 ② Mix A/B 중 루프백으로 돌아오는 쪽 ③ 윈도우 녹음 목록에 보이는 채널 이름"}
+    ]
   },
   {
     id:"minifuse2", name:"Arturia MiniFuse 2", mixer:"MiniFuse Control Center", status:"draft",
@@ -660,6 +697,107 @@ DEVICES.push(GRADE_DECK);
 const SVGS = {GRADE:SVG_GRADE, TOPO:SVG_TOPO, TREE:SVG_TREE, OPT:SVG_OPT, ANALOG:SVG_ANALOG};
 DEVICES.push(TWOPC_DECK);
 
+
+/* =====================================================================
+   기기 카탈로그 — 형의 실사용 판정 기반
+   tier  : 추천 / 애매 / 비추천 / 구림
+   grade : A(다중 서브믹스) / B(루프백 1개) / C(적용 불가) / '' (미확인)
+   loop  : multi / single / fixed(통합형) / none(부재) / '' (미확인)
+   ===================================================================== */
+const CATALOG = [
+ // ---- 추천 ----
+ {n:"RME 시리즈 (Babyface Pro FS / UCX / UFX / Digiface)", a:["rme","알엠이","digiface","디지페이스","babyface","베이비페이스","베페","ucx","ufx","fireface"],
+  t:"추천", g:"A", l:"multi", m:"TotalMix FX", c:"방송용 표준 종결기. 베이비페이스는 가격 대비 성능은 다소 아쉬운 편.", link:"rme"},
+ {n:"Topping E OTG 시리즈 (E1x2 / E2x2 / E4x4 / E8x8)", a:["topping","토핑","e otg","eotg","e1x2","e2x2","e4x4","e8x8"],
+  t:"추천", g:"B", l:"single", m:"TOPPING Control Center", c:"저가형 기준 균형 잡힌 밸런스, 높은 안정성. 투컴·방송 세팅 최고봉.", link:"topping-eotg"},
+ {n:"Topping M62", a:["m62","엠62","토핑 m62"],
+  t:"추천", g:"", l:"", m:"M Control Center", c:"E 시리즈보다 조금 낮은 성능. 다만 베이비페이스 수준의 채널 분리.", img:"Topping-m62.jpg"},
+ {n:"SSL 18", a:["ssl18","ssl 18","에스에스엘18"],
+  t:"추천", g:"", l:"", m:"SSL 360", c:"성능·방송 다 좋은 편. 사놨으면 투컴 세팅도 문제 없음.", img:"SSL-18.jpeg"},
+ {n:"Lewitt CONNECT 6", a:["lewitt","르윗","레빗","connect 6","connect6","커넥트6"],
+  t:"추천", g:"B", l:"single", m:"CONTROL CENTER", c:"나쁘지 않음. 채널 분리 괜찮고 투컴 세팅도 좋음.", link:"lewitt6"},
+ {n:"Audient iD mk2 시리즈", a:["audient","오디언트","id mk2","id4 mk2","id14 mk2","id24","id44"],
+  t:"추천", g:"B", l:"single", m:"iD 믹서 앱", c:"무난하나 초보자에게 불친절. 토핑의 존재 때문에 우선 추천하지는 않음.", link:"id14"},
+ {n:"SSL 12", a:["ssl12","ssl 12","에스에스엘12"],
+  t:"추천", g:"", l:"", m:"SSL 360", c:"18과 평은 대체로 동일하나 투컴 세팅이 다소 아쉬움.", img:"SSL-12.jpg"},
+ {n:"Arturia MiniFuse 시리즈", a:["arturia","아투리아","아르투리아","minifuse","미니퓨즈"],
+  t:"추천", g:"", l:"", m:"MiniFuse Control Center", c:"무난한 성능, 무난한 안정성. 입문기 마지노선.", img:"Arturia-MiniFuse-2-OTG.webp"},
+ {n:"Black Lion Audio Revolution 2x2", a:["black lion","블랙라이온","revolution 2x2"],
+  t:"추천", g:"", l:"", m:"", c:"이제 국내에서 안 팔림."},
+ {n:"Audient EVO 시리즈", a:["evo","이보","evo4","evo8","evo16"],
+  t:"추천", g:"", l:"", m:"EVO 앱", c:"미니퓨즈와 토핑의 존재로 요즘은 추천하지 않음."},
+ {n:"Maono PS22 Lite", a:["maono","마오노","ps22","ps22 lite"],
+  t:"추천", g:"", l:"", m:"제조사 앱", c:"미니퓨즈 염가판 느낌. 초저가형에서는 강자."},
+
+ // ---- 애매함 ----
+ {n:"Antelope Discrete 시리즈", a:["antelope","안텔로프","discrete"], t:"애매", g:"", l:"", m:"", c:"브랜드 자체가 드라이버 안정성 이슈 존재."},
+ {n:"Antelope Zen 시리즈", a:["zen","zen go","zen q","젠고"], t:"애매", g:"", l:"", m:"", c:"브랜드 자체가 드라이버 안정성 이슈 존재."},
+ {n:"Antelope Axino", a:["axino","악시노"], t:"애매", g:"", l:"", m:"", c:"브랜드 자체가 드라이버 안정성 이슈 존재."},
+ {n:"Icon Pro Cube2 Nano S", a:["icon","아이콘","cube2","cube 2 nano"], t:"애매", g:"", l:"", m:"", c:"브랜드 자체가 드라이버 안정성 이슈 존재."},
+ {n:"Icon Pro Cube4 Nano S", a:["cube4","cube 4 nano"], t:"애매", g:"", l:"", m:"", c:"브랜드 자체가 드라이버 안정성 이슈 존재."},
+ {n:"Icon Pro 32Ci", a:["32ci","icon 32"], t:"애매", g:"", l:"", m:"", c:"브랜드 자체가 드라이버 안정성 이슈 존재."},
+
+ // ---- 비추천 ----
+ {n:"Apogee Duet", a:["apogee","아포지","duet"], t:"비추천", g:"C", l:"none", m:"", c:"루프백 부재."},
+ {n:"Apogee Symphony Desktop", a:["symphony desktop","심포니"], t:"비추천", g:"C", l:"none", m:"", c:"루프백 부재."},
+ {n:"UAD Apollo 시리즈", a:["uad","apollo","아폴로","universal audio"], t:"비추천", g:"C", l:"none", m:"UA Console", c:"루프백 부재."},
+ {n:"UAD Volt 시리즈", a:["volt","볼트","volt 276"], t:"비추천", g:"C", l:"none", m:"", c:"루프백 부재."},
+ {n:"Prism Sound Lyra 2", a:["prism","lyra","리라"], t:"비추천", g:"C", l:"none", m:"", c:"루프백 부재. 다만 광케이블로는 구현 가능."},
+ {n:"SSL 2 / SSL 2+ / SSL 2 MkII / SSL 2+ MkII", a:["ssl2","ssl 2","ssl2+","ssl 2 mk2","ssl2 mkii"],
+  t:"비추천", g:"C", l:"fixed", m:"SSL 360", c:"통합형 루프백이라 비추천."},
+ {n:"MOTU M2", a:["motu","모투","m2"], t:"비추천", g:"C", l:"fixed", m:"MOTU 앱", c:"통합형 루프백이라 비추천."},
+ {n:"MOTU M4", a:["motu m4","m4"], t:"비추천", g:"C", l:"fixed", m:"MOTU 앱", c:"통합형 루프백이라 비추천."},
+ {n:"AMS Neve 88M", a:["neve","네브","88m"], t:"비추천", g:"", l:"", m:"", c:"디지페이스로 운용 시 어떻게든 사용 가능."},
+ {n:"Lewitt CONNECT 2", a:["connect 2","connect2","커넥트2"], t:"비추천", g:"C", l:"fixed", m:"CONTROL CENTER", c:"통합형 루프백이라 비추천."},
+ {n:"Yamaha ZG01", a:["zg01","zg 01","야마하 zg"], t:"비추천", g:"", l:"", m:"", c:"비추천."},
+
+ // ---- 구림 ----
+ {n:"Audient iD mk1 시리즈 (iD14 / iD22 / iD44)", a:["id mk1","id14 mk1","id22","id44 mk1"],
+  t:"구림", g:"B", l:"single", m:"iD 믹서 앱", c:"유사 루프백 가능. 성능·안정성은 아쉬움.", link:"id14"},
+ {n:"Focusrite Scarlett 시리즈", a:["focusrite","포커스라이트","scarlett","스칼렛","2i2","4i4","솔로"],
+  t:"구림", g:"", l:"", m:"Focusrite Control", c:"브랜드 자체가 드라이버 안정성 이슈 존재 (1~4세대)."},
+ {n:"Focusrite Clarett 시리즈", a:["clarett","클라렛"], t:"구림", g:"", l:"", m:"Focusrite Control", c:"브랜드 제품 자체가 드라이버 안정성 이슈 존재."},
+ {n:"PreSonus Revelator io24", a:["presonus","프리소너스","revelator","io24"], t:"구림", g:"", l:"", m:"UC Surface", c:"하드웨어 구림, 안정성 이슈."},
+ {n:"PreSonus Revelator io44", a:["io44"], t:"구림", g:"", l:"", m:"UC Surface", c:"하드웨어 구림, 안정성 이슈."},
+ {n:"Steinberg UR22C", a:["steinberg","스테인버그","ur22","ur22c","ur 시리즈"],
+  t:"구림", g:"", l:"", m:"dspMixFx", c:"채널 분리는 되나 멀티플 ASIO 미존재. 하드웨어 구림."},
+ {n:"Yamaha AG03 / AG06", a:["yamaha","야마하","ag03","ag06","ag 03","ag 06"],
+  t:"구림", g:"C", l:"fixed", m:"AG 유틸", c:"세팅 없이 그대로 쓸 유저만 구매하세요."},
+ {n:"ESI Amber", a:["esi","이에스아이","amber"], t:"구림", g:"", l:"", m:"", c:"전반적으로 다 구림."},
+ {n:"ESI U22 XT", a:["u22xt","u22 xt"], t:"구림", g:"", l:"", m:"", c:"전반적으로 다 구림."},
+ {n:"ESI UNO", a:["esi uno","우노"], t:"구림", g:"", l:"", m:"", c:"초저가형에서는 PS22 Lite라는 강자가 있음."}
+];
+
+const TIER_INFO = {
+  '추천':   {cls:'b-ok',    d:'세팅과 안정성 모두 검증된 기기입니다.'},
+  '애매':   {cls:'b-draft', d:'성능과 기능은 괜찮으나 특정 부분에서 좋지 않은 기기입니다.'},
+  '비추천': {cls:'b-C',     d:'기기 성능은 좋으나 인터넷 방송에서는 기능적으로 맞지 않는 기기입니다.'},
+  '구림':   {cls:'b-C',     d:'성능 이슈·안정성 이슈가 복합적으로 있는 기기입니다.'}
+};
+const LOOP_INFO = {
+  multi:  '출력마다 루프백을 걸 수 있어 용도별로 나눌 수 있습니다.',
+  single: '루프백이 하나뿐이지만 무엇을 실을지는 고를 수 있습니다.',
+  fixed:  '입력과 재생을 무조건 섞어 내보내는 통합형이라 골라낼 수 없습니다.',
+  none:   '루프백 기능 자체가 없습니다.'
+};
+
+/* 카탈로그를 검색 대상에 편입 */
+CATALOG.forEach(function(it, i){
+  if (it.link) {
+    const d = DEVICES.find(x => x.id === it.link);
+    if (d) {
+      d.catalog = it;
+      d.alias = (d.alias || []).concat(it.a);
+      if (!d.grade) d.grade = it.g;
+      return;
+    }
+  }
+  DEVICES.push({
+    id: 'cat' + i, name: it.n, mixer: it.m || '',
+    status: 'draft', grade: it.g, alias: it.a, catalog: it, img: it.img
+  });
+});
+
 /* =====================================================================
    검색 로직
    ===================================================================== */
@@ -701,8 +839,56 @@ function envSlide(){
   };
 }
 
+function catalogSlides(dev){
+  const c = dev.catalog;
+  if (!c) return null;
+  const ti = TIER_INFO[c.t] || {d:''};
+  const gradeTxt = c.g === 'A' ? 'A급 — 용도별 루프백을 여러 개 만들 수 있습니다.'
+                 : c.g === 'B' ? 'B급 — 루프백이 하나뿐이지만 방송용은 정상적으로 만들 수 있습니다.'
+                 : c.g === 'C' ? 'C급 — 윤슬 표준을 적용할 수 없습니다.'
+                 : '등급 미확인 — 믹서 앱에서 루프백 소스를 고를 수 있는지 확인이 필요합니다.';
+  const body = [
+    '<b>추천도 · ' + c.t + '</b> — ' + ti.d,
+    '<b>' + gradeTxt + '</b>',
+    (c.l ? '<b>루프백</b> — ' + LOOP_INFO[c.l] : '<b>루프백</b> — 아직 확인되지 않았습니다.'),
+    (c.m ? '<b>믹서 앱</b> — ' + c.m : '<b>믹서 앱</b> — 확인 필요')
+  ];
+  const info = {
+    k: '기기 정보', t: dev.name, body: body,
+    note: '<b>현장 메모</b> — ' + c.c
+  };
+  if (c.img) { info.img = c.img; info.cap = dev.name; }
+
+  if (c.g === 'C') {
+    const why = c.l === 'none'
+      ? '이 기기에는 <b>루프백 기능 자체가 없습니다.</b> 방송에 나갈 소리를 되돌려 받을 통로가 없습니다.'
+      : '이 기기는 <b>통합형(고정 혼합) 루프백</b>입니다. 입력과 재생이 무조건 섞여 나가서, 방송에 나갈 소리만 골라낼 방법이 없습니다.';
+    return [info, {
+      k:'적용 불가', t:'윤슬 표준을 적용할 수 없습니다', body:[
+        why,
+        '세팅 실력의 문제가 아니라 <b>기기의 구조적 한계</b>입니다. 무리하게 맞추려 하면 시간만 소모됩니다.',
+        '<b>루프백 소스를 고를 수 있는 기기</b>로 교체가 필요합니다.',
+        '추천 기기는 검색창에 <code>등급</code>을 쳐서 A급·B급 목록을 확인하세요.'
+      ],
+      warn:'상담 단계에서 이 기기가 확인되면 <b>세팅 진행 전에 먼저 안내</b>하는 것이 좋습니다.'
+    }];
+  }
+  return [info];
+}
+
 function buildSlides(dev){
   const head = envSlide();
+  const cat = catalogSlides(dev);
+  if (cat && (!dev.slides || !dev.slides.length)) {
+    const isC = dev.catalog && dev.catalog.g === 'C';
+    const rest = isC ? [] : JSON.parse(JSON.stringify(STD));
+    const all = cat.concat(rest);
+    return head ? [head, ...all] : all;
+  }
+  if (cat && dev.slides && dev.slides.length) {
+    const all = cat.concat(dev.slides);
+    return head ? [head, ...all] : all;
+  }
   if(dev && dev.slides && dev.slides.length) return head ? [head, ...dev.slides] : dev.slides;
   const base = JSON.parse(JSON.stringify(STD));
   if(dev && dev.img){
@@ -763,7 +949,8 @@ function openDeck(dev, rawQuery){
   $("#dMixer").textContent = dev ? (dev.mixer||"") : "등록되지 않은 기기";
 
   let badge = '<span class="badge b-std">표준 절차</span>';
-  if(dev && dev.status==="ready") badge = '<span class="badge b-ok">전용 절차</span>';
+  if(dev && dev.catalog && dev.catalog.g === 'C') badge = '';
+  else if(dev && dev.status==="ready") badge = '<span class="badge b-ok">전용 절차</span>';
   else if(dev && dev.status==="draft") badge = '<span class="badge b-draft">검토 전</span>';
   const GR = {
     A:{t:'A급 · 다중 서브믹스', d:'출력마다 독립 믹스 + 자유 루프백. <b>방송·노래방·합주용 루프백을 동시에</b> 운영할 수 있습니다.'},
@@ -772,13 +959,17 @@ function openDeck(dev, rawQuery){
   };
   const g = dev && dev.grade;
   if (g && GR[g]) badge = '<span class="badge b-'+g+'">'+GR[g].t+'</span> ' + badge;
+  if (dev && dev.catalog) {
+    const ti = TIER_INFO[dev.catalog.t];
+    if (ti) badge = '<span class="badge '+ti.cls+'">'+dev.catalog.t+'</span> ' + badge;
+  }
   $("#dBadge").innerHTML = badge;
 
   let notice = "";
   if(!dev){
     notice = '<b>'+esc(rawQuery||"")+' 는 아직 등록되지 않은 기기입니다.</b> 아래는 기기와 무관한 윤슬 표준 공통 절차입니다. '
            + '믹서 앱에서 같은 원리에 해당하는 메뉴를 찾아 적용하세요.';
-  } else if(dev.status==="draft"){
+  } else if(dev.status==="draft" && !(dev.catalog && dev.catalog.g==='C')){
     notice = '<b>이 기기는 전용 절차가 아직 검토 전입니다.</b> 참고 화면과 표준 공통 절차를 함께 보여드립니다. '
            + '실제 적용 전 믹서 앱에서 한 번 확인이 필요합니다.';
   }
@@ -812,7 +1003,12 @@ function renderAC(list){
   if(!list.length){ $("#ac").classList.remove("on"); $("#chips").classList.remove("dim"); return; }
   $("#chips").classList.add("dim");
   $("#ac").innerHTML = list.map((d,i)=>{
-    const b = d.status==="ready" ? '<span class="badge b-ok">전용</span>' : '<span class="badge b-draft">검토 전</span>';
+    let b = d.status==="ready" ? '<span class="badge b-ok">전용</span>' : '<span class="badge b-draft">검토 전</span>';
+    if (d.catalog) {
+      const ti = TIER_INFO[d.catalog.t];
+      if (ti) b = '<span class="badge '+ti.cls+'">'+d.catalog.t+'</span>' + b;
+    }
+    if (d.grade) b = '<span class="badge b-'+d.grade+'">'+d.grade+'급</span>' + b;
     return '<div class="ac-item" data-i="'+i+'"><span class="ac-name">'+esc(d.name)+'</span>'+b+'<span class="ac-meta">'+esc(d.mixer||"")+'</span></div>';
   }).join("");
   $("#ac").classList.add("on");
