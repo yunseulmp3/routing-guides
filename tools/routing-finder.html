@@ -277,34 +277,48 @@ const DEVICES = [
   {
     id:"rme", name:"RME Babyface Pro", mixer:"TotalMix FX", status:"ready", grade:"A",
     alias:["rme","babyface","베이비페이스","바베","babyface pro","fireface","totalmix","토탈믹스","알엠이","베페"],
-    note:"RME 전 기종(Babyface / Fireface) 공통 · TotalMix FX 기준",
+    note:"RME 전 기종(Babyface / Fireface) 공통 · TotalMix FX 기준 · 실기 검증 완료",
     slides:[
       {k:"준비", t:"TotalMix FX 열기", body:[
         "RME 드라이버와 <b>TotalMix FX</b>가 설치되어 있는지 확인합니다.",
-        "TotalMix 화면은 위에서부터 <b>Hardware Inputs / Software Playback / Hardware Outputs</b> 3단입니다.",
-        "이 세 단의 구분이 전부입니다. <b>가운데 단(Software Playback)</b>이 PC에서 나는 소리입니다."
-      ], note:"RME는 <b>출력 서브믹스</b> 방식이라, 어떤 출력을 선택하고 있느냐에 따라 아래 페이더의 의미가 달라집니다. 항상 <b>어느 출력을 잡고 있는지</b> 먼저 확인하세요."},
+        "화면은 위에서부터 <b>Hardware Inputs / Software Playback / Hardware Outputs</b> 3단입니다.",
+        "맨 아래 <b>출력을 하나 클릭하면</b> 위쪽 페이더의 의미가 '그 출력으로 얼마나 보낼지'로 바뀝니다.",
+        "즉 <b>출력 하나당 독립된 믹스가 하나씩</b> 붙어 있습니다. 이게 RME 방식의 전부입니다."
+      ], note:"항상 <b>지금 어느 출력을 잡고 있는지</b> 먼저 확인하세요. 그걸 놓치면 엉뚱한 믹스를 만지게 됩니다."},
+
       {k:"1단계", t:"재생 채널 이름 배정", body:[
-        "<b>Playback 1/2 → <code>MIC</code></b> (REAPER가 ASIO로 직접 출력)",
+        "<b>Playback 1/2 → <code>MIC</code></b> — REAPER가 ASIO로 직접 출력하는 채널",
         "<b>Playback 3/4 → <code>Chrome</code></b>",
-        "<b>Playback 5/6 → <code>Discord</code></b>, 이후 필요한 소스를 순서대로",
+        "<b>Playback 5/6 → <code>Discord</code></b>, 이후 <code>PC</code> · <code>Syncroom</code> 등 순서대로",
         "윈도우 이름은 재생 쪽에 <code>Chrome</code>·<code>Discord</code>, 녹음 쪽에 <code>MIC</code>가 보이면 정상입니다."
-      ], note:"이름 변경은 <b>LoopbackKit</b>으로 한 번에 처리할 수 있습니다. 재생 목록에 MIC가 없어도 정상입니다."},
-      {k:"2단계", t:"방송용 출력 서브믹스", body:[
-        "Hardware Outputs에서 <b>방송으로 보낼 출력</b>을 선택합니다.",
-        "그 상태에서 Software Playback의 <b><code>MIC</code>만 올리고</b>, 나머지는 전부 내립니다.",
-        "<b>Hardware Inputs는 전부 −∞</b>로 내립니다. 생마이크 입력이 여기 포함됩니다."
-      ], warn:"TotalMix에서 <b>0.0dB는 통과(유니티)</b>입니다. 음소거가 아닙니다. 반드시 <b>맨 아래 −∞</b>까지 내리세요."},
-      {k:"3단계", t:"내 모니터링 출력", body:[
-        "헤드폰/스피커 출력을 선택한 뒤, <b>듣고 싶은 소리를 전부</b> 올립니다.",
-        "여기에는 마이크·브라우저·통화가 다 들어가도 됩니다. 방송으로 나가는 건 앞 단계의 서브믹스뿐입니다.",
-        "본인 마이크 모니터링은 취향에 맞게 조절합니다."
-      ], note:"<b>내가 듣는 소리 ≠ 방송에 나가는 소리</b>. 이 분리가 RME 방식의 핵심입니다."},
-      {k:"4단계", t:"저장", body:[
-        "TotalMix 상단 <b>Workspace → Save Workspace As</b>로 현재 상태를 저장합니다.",
+      ], note:"이름 변경은 <b>LoopbackKit</b>으로 한 번에 처리합니다. 재생 목록에 MIC가 없어도 정상입니다."},
+
+      {k:"2단계", t:"용도별 루프백 출력 만들기", body:[
+        "RME는 <b>출력마다 루프백을 따로 걸 수 있습니다.</b> 그래서 용도별로 나눠 만듭니다.",
+        "<b>방송용</b> — 출력 하나를 잡고 이름을 <code>Mic</code>로. 여기엔 <b><code>MIC</code>만</b> 올립니다.",
+        "<b>노래방용</b> — 다른 출력에 <code>Karaoke</code>. <b><code>MIC</code> + <code>Chrome</code></b>(반주)을 올립니다.",
+        "<b>합주용</b> — 또 다른 출력에 <code>Syncroom Mic</code>. <code>MIC</code> 계열을 올립니다.",
+        "각 출력에서 <b>Loopback 버튼을 켭니다.</b> 그래야 윈도우 녹음 장치로 되돌아옵니다."
+      ], note:"실측 예시 — <b>Mic</b>=AS 1/2, <b>Karaoke</b>=ADAT 3/4, <b>syncroom mic</b>=ADAT 5/6. 앱마다 필요한 믹스가 다르기 때문에 나누는 겁니다."},
+
+      {k:"3단계", t:"하드웨어 입력 정리", body:[
+        "<b>Hardware Inputs는 전부 −∞</b>로 내립니다. 생마이크 입력도 예외 없이.",
+        "입력 채널의 <b>M(뮤트) 버튼</b>도 켜두면 확실합니다.",
+        "REAPER를 거친 마이크가 이미 <code>MIC</code>에 실려 있어서, 생마이크가 열려 있으면 소리가 두 번 나갑니다."
+      ], warn:"TotalMix에서 <b>0.0dB는 통과(유니티)</b>입니다. 음소거가 아닙니다. 반드시 <b>맨 아래 −∞</b>까지 내리세요. 여기서 사고가 가장 많이 납니다."},
+
+      {k:"4단계", t:"내 모니터링 출력", body:[
+        "헤드폰(PH 3/4) 출력을 선택하고 <b>듣고 싶은 소리를 전부</b> 올립니다.",
+        "여기엔 마이크·브라우저·통화가 다 들어가도 됩니다.",
+        "방송으로 나가는 건 앞에서 만든 <b>루프백 출력들뿐</b>입니다."
+      ], note:"<b>내가 듣는 소리 ≠ 방송에 나가는 소리.</b> 이 분리가 A급 기기에서만 가능한 부분입니다."},
+
+      {k:"5단계", t:"저장", body:[
+        "상단 <b>Workspace → Save Workspace As</b>로 현재 상태를 저장합니다.",
         "Snapshot 슬롯에도 저장해두면 실수로 만졌을 때 즉시 되돌릴 수 있습니다.",
-        "저장 파일은 고객 PC 바탕화면 등 찾기 쉬운 곳에 둡니다."
-      ], note:"저장을 안 하면 드라이버 재설치나 재부팅 후 <b>전부 초기화</b>될 수 있습니다."}
+        "저장 파일(.tmws)은 고객 PC 바탕화면 등 찾기 쉬운 곳에 둡니다.",
+        "<b>라우팅 닥터</b>를 돌려 결과 파일도 함께 보관합니다."
+      ], note:"저장을 안 하면 드라이버 재설치나 재부팅 후 <b>전부 초기화</b>될 수 있습니다. 프리셋 파일이 있으면 나중에 구조를 그대로 읽어낼 수 있습니다."}
     ]
   },
   {
@@ -334,6 +348,13 @@ const DEVICES = [
         "볼륨 믹서에서 <b>Chrome → <code>Chrome</code></b>, <b>Discord → <code>Discord</code></b>로 지정합니다.",
         "지정 후 앱을 완전히 재시작합니다."
       ]},
+      {k:"제약", t:"이 기기는 루프백이 하나뿐입니다", body:[
+        "iD 시리즈는 <b>CUE B 하나만</b> 루프백으로 쓸 수 있습니다.",
+        "RME처럼 <b>방송용·노래방용·합주용을 동시에</b> 굴릴 수 없습니다.",
+        "그래서 <b>방송용 하나만</b> 만듭니다. 다른 용도가 필요하면 그때그때 CUE B의 소스를 바꿔 끼웁니다.",
+        "노래방을 자주 한다면 CUE B에 <code>Chrome</code>(반주)을 같이 올려두는 방법도 있습니다. 대신 방송에 반주가 항상 나갑니다."
+      ], warn:"이 제약은 기기의 한계입니다. 용도별 분리가 꼭 필요하면 <b>A급 기기(RME 등)</b>로 가야 합니다."},
+
       {k:"마무리", t:"점검", body:[
         "모든 엔드포인트가 <b>44100Hz</b>인지 다시 확인합니다.",
         "기본 재생·기본 녹음 장치가 iD로 잡혀 있는지 확인합니다.",
@@ -561,7 +582,82 @@ const SB_DECK = {
 };
 DEVICES.push(SB_DECK);
 
-const SVGS = {TOPO:SVG_TOPO, TREE:SVG_TREE, OPT:SVG_OPT, ANALOG:SVG_ANALOG};
+
+const SVG_GRADE = `<svg viewBox="0 0 660 210" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+<rect x="14" y="16" width="200" height="178" rx="12" fill="#16202b" stroke="#60a5fa"/>
+<text x="114" y="46" fill="#93c5fd" font-size="17" font-weight="800" text-anchor="middle">A급</text>
+<text x="114" y="70" fill="#8b99aa" font-size="12" text-anchor="middle">다중 서브믹스</text>
+<rect x="38" y="86" width="152" height="22" rx="5" fill="#0e141b" stroke="#33404f"/>
+<text x="114" y="101" fill="#e8edf3" font-size="11.5" text-anchor="middle">방송용 루프백</text>
+<rect x="38" y="114" width="152" height="22" rx="5" fill="#0e141b" stroke="#33404f"/>
+<text x="114" y="129" fill="#e8edf3" font-size="11.5" text-anchor="middle">노래방용 루프백</text>
+<rect x="38" y="142" width="152" height="22" rx="5" fill="#0e141b" stroke="#33404f"/>
+<text x="114" y="157" fill="#e8edf3" font-size="11.5" text-anchor="middle">합주용 루프백</text>
+<text x="114" y="182" fill="#4ade80" font-size="11.5" text-anchor="middle">동시 운영 가능</text>
+
+<rect x="230" y="16" width="200" height="178" rx="12" fill="#16202b" stroke="#a78bfa"/>
+<text x="330" y="46" fill="#c4b5fd" font-size="17" font-weight="800" text-anchor="middle">B급</text>
+<text x="330" y="70" fill="#8b99aa" font-size="12" text-anchor="middle">루프백 1개 · 소스 선택</text>
+<rect x="254" y="86" width="152" height="22" rx="5" fill="#0e141b" stroke="#33404f"/>
+<text x="330" y="101" fill="#e8edf3" font-size="11.5" text-anchor="middle">방송용 루프백</text>
+<rect x="254" y="114" width="152" height="50" rx="5" fill="#0e141b" stroke="#2b3542" stroke-dasharray="4 4"/>
+<text x="330" y="136" fill="#66748a" font-size="11.5" text-anchor="middle">나머지 용도는</text>
+<text x="330" y="152" fill="#66748a" font-size="11.5" text-anchor="middle">소스를 바꿔 끼움</text>
+<text x="330" y="182" fill="#fbbf24" font-size="11.5" text-anchor="middle">하나만 가능</text>
+
+<rect x="446" y="16" width="200" height="178" rx="12" fill="#16202b" stroke="#f87171"/>
+<text x="546" y="46" fill="#fca5a5" font-size="17" font-weight="800" text-anchor="middle">C급</text>
+<text x="546" y="70" fill="#8b99aa" font-size="12" text-anchor="middle">고정 혼합 루프백</text>
+<rect x="470" y="86" width="152" height="50" rx="5" fill="#0e141b" stroke="#33404f"/>
+<text x="546" y="107" fill="#e8edf3" font-size="11.5" text-anchor="middle">입력 + 재생이</text>
+<text x="546" y="124" fill="#e8edf3" font-size="11.5" text-anchor="middle">무조건 섞여 나감</text>
+<text x="546" y="160" fill="#f87171" font-size="12" font-weight="700" text-anchor="middle">골라낼 방법 없음</text>
+<text x="546" y="182" fill="#f87171" font-size="11.5" text-anchor="middle">서비스 제외</text>
+</svg>`;
+
+const GRADE_DECK = {
+  id:"grade", name:"인터페이스 등급 (A / B / C)", mixer:"어디까지 적용 가능한지 판정", status:"ready", special:true,
+  alias:["등급","a급","b급","c급","루프백","loopback","서브믹스","submix","가능","적용","제외","스테인버그","steinberg"],
+  slides:[
+    {k:"기준", t:"루프백에 뭘 실을지 고를 수 있는가", body:[
+      "윤슬 표준의 핵심은 <b>방송에 나갈 소리만 골라 담는 것</b>입니다.",
+      "그래서 기기가 <b>루프백에 실을 소스를 고를 수 있는지</b>가 유일한 기준이 됩니다.",
+      "고를 수 있으면 적용 가능, 무조건 섞이면 불가능. 그 사이에 <b>몇 개나 만들 수 있는지</b>로 A와 B가 갈립니다."
+    ], svg:"GRADE",
+     note:"기기 조사할 때 확인할 것은 딱 하나입니다 — <b>믹서 앱에서 루프백 소스를 지정할 수 있는가?</b>"},
+
+    {k:"A급", t:"다중 서브믹스 + 자유 루프백", body:[
+      "출력마다 <b>독립된 믹스</b>가 있고, 원하는 출력에 루프백을 걸 수 있습니다.",
+      "방송용 · 노래방용 · 합주용을 <b>동시에</b> 운영할 수 있습니다.",
+      "대표 기종: <b>RME 전 기종</b> (Babyface / Fireface, TotalMix FX)",
+      "윤슬 표준 <b>풀버전</b>을 그대로 적용합니다."
+    ], note:"내가 듣는 소리와 방송에 나가는 소리를 완전히 분리할 수 있는 것도 이 등급의 특권입니다."},
+
+    {k:"B급", t:"전용 루프백 1개, 소스는 선택 가능", body:[
+      "루프백이 <b>하나뿐</b>이라 용도별로 나눌 수 없습니다.",
+      "대신 그 하나에 <b>무엇을 실을지는 고를 수 있어서</b> 방송용은 정상적으로 만들어집니다.",
+      "대표 기종: <b>Audient iD 시리즈</b>(CUE B), <b>Topping E OTG</b>(전용 Loopback 섹션)",
+      "윤슬 표준 <b>축소판</b> — 방송용 하나만 구성합니다."
+    ], warn:"B급 고객에게 <b>A급 절차를 그대로 안내하면 안 됩니다.</b> 없는 기능을 찾게 만들어 세팅이 막힙니다."},
+
+    {k:"C급", t:"고정 혼합 루프백 — 적용 불가", body:[
+      "입력과 재생을 <b>무조건 섞어서</b> 내보냅니다. 고를 수 있는 여지가 없습니다.",
+      "방송에 나갈 소리만 분리할 방법이 원리적으로 없습니다.",
+      "대표 기종: <b>Steinberg UR 계열</b>, <b>Yamaha AG 계열</b> (이른바 스테인버그식 루프백)",
+      "<b>서비스 대상에서 제외</b>합니다. 루프백 소스를 고를 수 있는 기기로 교체가 필요합니다."
+    ], warn:"이건 세팅 실력의 문제가 아니라 <b>기기의 구조적 한계</b>입니다. 무리하게 맞추려다 시간만 날립니다."},
+
+    {k:"판정", t:"처음 보는 기기 등급 매기기", body:[
+      "믹서 앱을 열고 <b>루프백 / Loopback / CUE / Mix 항목</b>을 찾습니다.",
+      "<b>소스를 고르는 드롭다운이나 페이더가 있는가?</b> 없으면 → <b>C급</b>",
+      "있다면, <b>그런 루프백을 여러 개 만들 수 있는가?</b> 예 → <b>A급</b> / 하나뿐 → <b>B급</b>",
+      "판정한 등급은 기기 목록에 기록해두면 다음 고객부터는 바로 답이 나옵니다."
+    ], note:"<b>라우팅 닥터</b>가 등급을 아는 기기는 자동으로 판정합니다. 모르는 기기는 '등급 미확인'으로 표시하고 이 확인을 요청합니다."}
+  ]
+};
+DEVICES.push(GRADE_DECK);
+
+const SVGS = {GRADE:SVG_GRADE, TOPO:SVG_TOPO, TREE:SVG_TREE, OPT:SVG_OPT, ANALOG:SVG_ANALOG};
 DEVICES.push(TWOPC_DECK);
 
 /* =====================================================================
@@ -792,6 +888,7 @@ function parseReport(text){
         const c = v.split('|');
         const o = {kind:c[0]||'', name:c[1]||'', hw:c[2]||'', rates:c[3]||'', act:c[4]||''};
         o.active = parseInt((o.act.split('/')[0]||'0'),10) > 0;
+        o.grade = (c[5]||'').trim();
         if(k==='iface') env.ifaces.push(o);
         else if(k==='capcard') env.caps.push(o);
         else env.virtuals.push(o);
@@ -834,6 +931,11 @@ function showEnv(env){
   let h = '<h4>진단 결과를 읽었습니다'+(env.pc? ' — '+esc(env.pc):'')+'</h4>';
   h += '<div class="envrow"><span>구성</span><span>'+esc(setupLabel(env))+'</span></div>';
   h += '<div class="envrow"><span>오인페</span><span>'+esc(names)+'</span></div>';
+  const gr = live.filter(i=>i.grade).map(i=>i.name+' = '+i.grade+'급');
+  if (gr.length) h += '<div class="envrow"><span>등급</span><span>'+esc(gr.join(', '))+'</span></div>';
+  if (live.some(i=>i.grade==='C')) {
+    h += '<div class="envrow"><span></span><span style="color:#fca5a5"><b>C급 기기 — 윤슬 표준 적용 불가</b></span></div>';
+  }
   if(env.caps.length) h += '<div class="envrow"><span>캡처보드</span><span>'+esc(env.caps.map(c=>c.name).join(', '))+'</span></div>';
   h += '<div class="envrow"><span>진단</span><span>'
      + (env.problems.length? '<b style="color:#f87171">문제 '+env.problems.length+'건</b> · ':'')
@@ -842,6 +944,7 @@ function showEnv(env){
   if(env.match) h += '<button class="ebtn" data-go="dev">'+esc(env.match.name)+' 가이드 열기</button>';
   else h += '<button class="ebtn" data-go="std">표준 공통 절차 열기</button>';
   if(env.two) h += '<button class="ebtn sub" data-go="two">투컴 배선 가이드</button>';
+  h += '<button class="ebtn sub" data-go="grade">등급 설명</button>';
   h += '<button class="ebtn sub" data-go="clear">해제</button></div>';
   const c = $("#envCard");
   c.innerHTML = h; c.classList.add("on");
@@ -853,6 +956,7 @@ $("#envCard").addEventListener("click", e=>{
   if(g==="dev") openDeck(ENV.match);
   else if(g==="std") openDeck(null, "");
   else if(g==="two") openDeck(DEVICES.find(d=>d.id==="twopc"));
+  else if(g==="grade") openDeck(DEVICES.find(d=>d.id==="grade"));
   else { ENV=null; $("#envCard").classList.remove("on"); }
 });
 
