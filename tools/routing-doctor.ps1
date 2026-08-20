@@ -29,7 +29,7 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
-$ScriptVersion = '1.8'
+$ScriptVersion = '2.1'
 
 # =====================================================================
 # 0. 윤슬 표준 정의 (여기만 고치면 판정 기준이 바뀝니다)
@@ -621,6 +621,82 @@ function Show-Diff {
     Write-Both ''
 }
 
+function ConvertTo-AppKey {
+    <# \Device\HarddiskVolume3\Program Files\... 와 C:\Program Files\... 를 같은 값으로 맞춘다 #>
+    param([string]$Path)
+    if (-not $Path) { return '' }
+    $s = $Path
+    $s = $s -replace '^\\\\\?\\', ''
+    $s = $s -replace '^\\Device\\HarddiskVolume\d+', ''
+    $s = $s -replace '^[A-Za-z]:', ''
+    return $s.ToLower()
+}
+
+function Get-AppAssignments {
+    <#
+      앱별 오디오 장치 지정을 읽는다. 저장소가 두 군데다.
+        A. HKCU\Software\Microsoft\Multimedia\Audio\DefaultEndpoint  (현재 볼륨 믹서가 쓰는 곳)
+        B. HKCU\...\Internet Explorer\LowRegistry\Audio\PolicyConfig\PropertyStore  (예전 기록이 쌓이는 곳)
+      레지스트리를 읽기만 한다.
+    #>
+    $list = New-Object System.Collections.Generic.List[object]
+
+    # ---- A. 현재 저장소 ----
+    $rootA = 'HKCU:\Software\Microsoft\Multimedia\Audio\DefaultEndpoint'
+    if (Test-Path $rootA) {
+        foreach ($k in (Get-ChildItem -Path $rootA -ErrorAction SilentlyContinue)) {
+            $item = Get-Item -Path $k.PSPath -ErrorAction SilentlyContinue
+            if (-not $item) { continue }
+            $appPath = [string]$item.GetValue('')
+            if (-not $appPath) { continue }
+            foreach ($vn in @('000_000', '001_000')) {
+                $raw = [string]$item.GetValue($vn)
+                if (-not $raw) { continue }
+                if ($raw -notmatch '(\{0\.0\.(\d)\.00000000\}\.\{[0-9a-fA-F-]+\})') { continue }
+                $list.Add([pscustomobject]@{
+                    Store      = 'A'
+                    App        = ($appPath -split '\\')[-1]
+                    AppPath    = $appPath
+                    AppKey     = (ConvertTo-AppKey $appPath)
+                    Role       = $(if ($vn -eq '000_000') { '일반' } else { '통신' })
+                    Flow       = $(if ($Matches[2] -eq '0') { 'Render' } else { 'Capture' })
+                    EndpointId = $Matches[1]
+                    Device     = ''
+                }) | Out-Null
+            }
+        }
+    }
+
+    # ---- B. 예전 저장소 ----
+    $rootB = 'HKCU:\Software\Microsoft\Internet Explorer\LowRegistry\Audio\PolicyConfig\PropertyStore'
+    if (Test-Path $rootB) {
+        foreach ($k in (Get-ChildItem -Path $rootB -ErrorAction SilentlyContinue)) {
+            $item = Get-Item -Path $k.PSPath -ErrorAction SilentlyContinue
+            if (-not $item) { continue }
+            $raw = [string]$item.GetValue('')
+            if (-not $raw -or $raw -notlike '*|*') { continue }
+            $parts = $raw -split '\|', 2
+            $dev = $parts[0]
+            $app = ($parts[1] -split '%b')[0]
+            if (-not $app -or $app -eq '#') { continue }
+            $vid = ''
+            if ($dev -match '(vid_[0-9a-fA-F]{4})') { $vid = $Matches[1].ToUpper() }
+            elseif ($dev -match '(ven_[0-9a-fA-F]{4})') { $vid = $Matches[1].ToUpper() }
+            $list.Add([pscustomobject]@{
+                Store      = 'B'
+                App        = ($app -split '\\')[-1]
+                AppPath    = $app
+                AppKey     = (ConvertTo-AppKey $app)
+                Role       = '-'
+                Flow       = $(if ($dev -match 'pcm_in|_in_|capture') { 'Capture' } else { 'Render' })
+                EndpointId = ''
+                Device     = $vid
+            }) | Out-Null
+        }
+    }
+    return $list
+}
+
 # =====================================================================
 # 4. 기기 분류 / 그룹핑
 # =====================================================================
@@ -987,6 +1063,84 @@ function Invoke-Diagnosis {
                     '이 기기의 루프백 방식이 아직 조사되지 않았습니다.' `
                     '믹서 앱에서 루프백에 실을 소스를 고를 수 있는지 확인해 주세요. 고를 수 있으면 표준 적용 가능, 무조건 섞이면 불가입니다.')) | Out-Null
             }
+        }
+    }
+
+    # --- 7h) 앱별 출력 지정 -------------------------------------------------
+    if (-not $script:IsDumpMode) {
+        $apps = @()
+        try { $apps = @(Get-AppAssignments) } catch { }
+        $cur = @($apps | Where-Object { $_.Store -eq 'A' })
+        $old = @($apps | Where-Object { $_.Store -eq 'B' })
+
+        $epById = @{}
+        foreach ($e in $Endpoints) { $epById[$e.Id] = $e }
+
+        if ($cur.Count -eq 0) {
+            $f.Add((New-Finding '주의' '앱별 출력이 하나도 지정되어 있지 않음' `
+                '윈도우 볼륨 믹서에서 앱마다 출력 장치를 따로 지정한 기록이 없습니다.' `
+                '이 상태면 모든 소리가 기본 장치 한 곳으로 몰립니다. 설정 > 시스템 > 소리 > 볼륨 믹서에서 앱마다 출력을 지정해 주세요.')) | Out-Null
+        }
+        else {
+            $lines = @(); $offIface = @()
+            foreach ($a in ($cur | Sort-Object App, Role)) {
+                $e = $epById[$a.EndpointId]
+                $target = if ($e) { "$($e.Name) ($($e.Desc))" } else { '알 수 없는 장치(삭제됨)' }
+                $bad = -not ($e -and $ifaceEpIds.ContainsKey($e.Id))
+                if ($bad -and $a.Role -eq '일반') { $offIface += "$($a.App) -> $target" }
+                $lines += "$($a.App) [$($a.Role)] -> $target" + $(if ($bad) { '   <- 오인페가 아님' } else { '' })
+            }
+            $f.Add((New-Finding '정보' "앱별 출력 지정 $($cur.Count)건" ($lines -join "`r`n") '')) | Out-Null
+            if ($offIface.Count -gt 0) {
+                $f.Add((New-Finding '주의' "오인페가 아닌 장치로 지정된 앱 $($offIface.Count)개" ($offIface -join "`r`n") `
+                    '이 앱들의 소리는 방송에 잡히지 않습니다. 의도한 게 아니면 볼륨 믹서에서 오인페 채널로 바꿔주세요.')) | Out-Null
+            }
+        }
+
+        # 업데이트로 경로가 바뀌어 지정이 풀린 앱 찾기
+        $stale = @()
+        $running = @{}
+        foreach ($proc in (Get-Process -ErrorAction SilentlyContinue)) {
+            $pp = $null
+            try { $pp = $proc.Path } catch { }
+            if ($pp) { $running[$proc.ProcessName.ToLower() + '.exe'] = $pp }
+        }
+        $byApp = $apps | Group-Object App
+        foreach ($g in $byApp) {
+            $name = $g.Name.ToLower()
+            if (-not $running.ContainsKey($name)) { continue }
+            $nowKey = ConvertTo-AppKey $running[$name]
+            $known = @($g.Group | ForEach-Object { $_.AppKey })
+            if ($known -notcontains $nowKey) {
+                $stale += "$($g.Name) : 지금 실행 경로가 지정 기록에 없음"
+            }
+        }
+        if ($stale.Count -gt 0) {
+            # 방송 라우팅에 실제로 영향을 주는 앱만 '문제'로 올린다
+            $careAbout = @('discord', 'chrome', 'msedge', 'whale', 'firefox', 'obs64', 'obs32',
+                           'syncroom', 'spotify', 'reaper', 'kakaotalk', 'steam', 'vlc', 'potplayer')
+            $hot = @(); $cold = @()
+            foreach ($line in $stale) {
+                $nm = (($line -split ' :')[0]) -replace '\.exe$', ''
+                if ($careAbout -contains $nm.ToLower()) { $hot += $line } else { $cold += $line }
+            }
+            if ($hot.Count -gt 0) {
+                $f.Add((New-Finding '문제' "업데이트로 출력 지정이 풀린 앱 $($hot.Count)개" `
+                    ($hot -join "`r`n") `
+                    '이 앱들은 설치 경로에 버전 번호가 들어갑니다. 업데이트되면 윈도우가 다른 프로그램으로 인식해서 예전에 해둔 출력 지정이 통째로 풀립니다. 볼륨 믹서에서 다시 지정해 주세요. (디스코드가 대표적입니다)')) | Out-Null
+            }
+            if ($cold.Count -gt 0) {
+                $f.Add((New-Finding '정보' "출력 지정 기록이 없는 앱 $($cold.Count)개" `
+                    ($cold -join "`r`n") `
+                    '방송 라우팅과 직접 상관없는 앱들입니다. 업데이트로 경로가 바뀌었거나 애초에 지정한 적이 없는 경우입니다.')) | Out-Null
+            }
+        }
+
+        if ($old.Count -gt 0) {
+            $f.Add((New-Finding '정보' "예전 앱 지정 기록 $($old.Count)건 (참고용)" `
+                (@($old | Sort-Object App -Unique | Select-Object -First 12 |
+                   ForEach-Object { "$($_.App)  [$($_.Device)]" }) -join "`r`n") `
+                '윈도우가 예전 방식으로 쌓아둔 기록입니다. 지금 동작에는 영향이 적지만, 같은 앱이 여러 버전으로 남아 있으면 업데이트로 지정이 풀렸다는 신호입니다.')) | Out-Null
         }
     }
 
