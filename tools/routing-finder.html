@@ -25,7 +25,15 @@
   .logo{font-size:13px;letter-spacing:.22em;color:var(--ac);font-weight:700;margin-bottom:18px}
   .h1{font-size:clamp(26px,4.4vw,42px);font-weight:800;letter-spacing:-.02em;text-align:center;line-height:1.25}
   .sub{margin-top:14px;color:var(--tx2);font-size:15px;text-align:center;line-height:1.7}
-  .searchbox{position:relative;width:min(620px,100%);margin-top:34px}
+  .setupbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+  .sbtn{padding:10px 18px;border-radius:11px;border:1px solid var(--line);background:rgba(26,33,43,.6);
+        color:var(--tx2);font-size:14px;cursor:pointer;font-family:inherit;transition:.15s;font-weight:500}
+  .sbtn:hover{border-color:var(--ac2);color:var(--tx)}
+  .sbtn.on{border-color:var(--ac2);background:rgba(45,212,191,.14);color:var(--ac);font-weight:700}
+  .setuphint{margin-top:12px;font-size:13px;color:var(--tx3);text-align:center;line-height:1.7;max-width:620px}
+  .setuphint b{color:var(--tx2)}
+  .setuphint a{color:var(--ac);cursor:pointer;text-decoration:underline}
+  .searchbox{position:relative;width:min(620px,100%);margin-top:22px}
   .searchbox input{
     width:100%;padding:18px 54px 18px 20px;font-size:17px;color:var(--tx);
     background:var(--card);border:1px solid var(--line);border-radius:var(--r);outline:none;
@@ -154,6 +162,9 @@
   <div class="logo">YUNSEUL ROUTING</div>
   <h1 class="h1">오디오 인터페이스 이름을 검색하세요</h1>
   <p class="sub">등록된 기기는 전용 라우팅 절차가, 없는 기기는 표준 공통 절차가 슬라이드로 나옵니다.</p>
+
+  <div class="setupbar" id="setupbar"></div>
+  <div class="setuphint" id="setuphint"></div>
 
   <div class="searchbox">
     <input id="q" type="text" placeholder="예: iD14, Babyface, Topping, Lewitt…" autocomplete="off" spellcheck="false">
@@ -392,10 +403,6 @@ const DEVICES = [
     ]
   },
   {
-    id:"topping-m62", name:"Topping M62", mixer:"Topping 전용 앱", status:"draft",
-    alias:["m62","엠62","topping m62","토핑m62"], img:"Topping-m62.jpg"
-  },
-  {
     id:"lewitt6", name:"Lewitt CONNECT 6", mixer:"LEWITT CONTROL CENTER", status:"draft", grade:"B",
     alias:["lewitt","르윗","레빗","connect 6","connect6","커넥트6","커넥트 6"], img:"Lewitt-Connect 6.jpg",
     note:"공식 온라인 가이드 기준으로 만든 초안 · 실물 검증 전",
@@ -435,16 +442,6 @@ const DEVICES = [
         "<b>실물 확인 결과를 알려주시면 이 절차를 '전용 절차'로 승격합니다.</b>"
       ], note:"확인할 것 — ① 루프백 소스 선택 가능 여부 ② Mix A/B 중 루프백으로 돌아오는 쪽 ③ 윈도우 녹음 목록에 보이는 채널 이름"}
     ]
-  },
-  {
-    id:"minifuse2", name:"Arturia MiniFuse 2", mixer:"MiniFuse Control Center", status:"draft",
-    alias:["arturia","아투리아","아르투리아","minifuse","미니퓨즈","minifuse 2","minifuse2"],
-    img:"Arturia-MiniFuse-2-OTG.webp"
-  },
-  {
-    id:"ssl12", name:"SSL 12", mixer:"SSL 360", status:"draft",
-    alias:["ssl","ssl12","ssl 12","에스에스엘","solid state","solid state logic","솔리드스테이트"],
-    img:"SSL-12.jpg"
   },
   {
     id:"ssl18", name:"SSL 18", mixer:"SSL 360", status:"draft",
@@ -767,15 +764,15 @@ const CATALOG = [
  {n:"Topping M62", a:["m62","엠62","토핑 m62"],
   t:"추천", g:"A", l:"multi", m:"M Control Center", c:"E 시리즈보다 조금 낮은 성능. 다만 베이비페이스 수준의 채널 분리.", img:"Topping-m62.jpg", link:"m62"},
  {n:"SSL 18", a:["ssl18","ssl 18","에스에스엘18"],
-  t:"추천", g:"", l:"", m:"SSL 360", c:"성능·방송 다 좋은 편. 사놨으면 투컴 세팅도 문제 없음.", img:"SSL-18.jpeg"},
+  t:"추천", g:"", l:"", m:"SSL 360", c:"성능·방송 다 좋은 편. 사놨으면 투컴 세팅도 문제 없음.", img:"SSL-18.jpeg", pin:1},
  {n:"Lewitt CONNECT 6", a:["lewitt","르윗","레빗","connect 6","connect6","커넥트6"],
   t:"추천", g:"B", l:"single", m:"CONTROL CENTER", c:"나쁘지 않음. 채널 분리 괜찮고 투컴 세팅도 좋음.", link:"lewitt6"},
  {n:"Audient iD mk2 시리즈", a:["audient","오디언트","id mk2","id4 mk2","id14 mk2","id24","id44"],
   t:"추천", g:"B", l:"single", m:"iD 믹서 앱", c:"무난하나 초보자에게 불친절. 토핑의 존재 때문에 우선 추천하지는 않음.", link:"id14"},
  {n:"SSL 12", a:["ssl12","ssl 12","에스에스엘12"],
-  t:"추천", g:"", l:"", m:"SSL 360", c:"18과 평은 대체로 동일하나 투컴 세팅이 다소 아쉬움.", img:"SSL-12.jpg"},
+  t:"추천", g:"", l:"", m:"SSL 360", c:"18과 평은 대체로 동일하나 투컴 세팅이 다소 아쉬움.", img:"SSL-12.jpg", pin:1},
  {n:"Arturia MiniFuse 시리즈", a:["arturia","아투리아","아르투리아","minifuse","미니퓨즈"],
-  t:"추천", g:"", l:"", m:"MiniFuse Control Center", c:"무난한 성능, 무난한 안정성. 입문기 마지노선.", img:"Arturia-MiniFuse-2-OTG.webp"},
+  t:"추천", g:"", l:"", m:"MiniFuse Control Center", c:"무난한 성능, 무난한 안정성. 입문기 마지노선.", img:"Arturia-MiniFuse-2-OTG.webp", pin:1},
  {n:"Black Lion Audio Revolution 2x2", a:["black lion","블랙라이온","revolution 2x2"],
   t:"추천", g:"", l:"", m:"", c:"이제 국내에서 안 팔림."},
  {n:"Audient EVO 시리즈", a:["evo","이보","evo4","evo8","evo16"],
@@ -932,18 +929,20 @@ function catalogSlides(dev){
 
 function buildSlides(dev){
   const head = envSlide();
+  const setup = (dev && dev.special) ? null : setupSlide();
+  const pre = [head, setup].filter(Boolean);
   const cat = catalogSlides(dev);
   if (cat && (!dev.slides || !dev.slides.length)) {
     const isC = dev.catalog && dev.catalog.g === 'C';
     const rest = isC ? [] : JSON.parse(JSON.stringify(STD));
     const all = cat.concat(rest);
-    return head ? [head, ...all] : all;
+    return pre.length ? [...pre, ...all] : all;
   }
   if (cat && dev.slides && dev.slides.length) {
     const all = cat.concat(dev.slides);
-    return head ? [head, ...all] : all;
+    return pre.length ? [...pre, ...all] : all;
   }
-  if(dev && dev.slides && dev.slides.length) return head ? [head, ...dev.slides] : dev.slides;
+  if(dev && dev.slides && dev.slides.length) return pre.length ? [...pre, ...dev.slides] : dev.slides;
   const base = JSON.parse(JSON.stringify(STD));
   if(dev && dev.img){
     base.splice(1,0,{
@@ -954,7 +953,7 @@ function buildSlides(dev){
       note:"이 기기는 <b>전용 절차가 아직 검토 전</b>입니다. 표준 원리대로 대응하세요."
     });
   }
-  return head ? [head, ...base] : base;
+  return pre.length ? [...pre, ...base] : base;
 }
 
 /* =====================================================================
@@ -1089,10 +1088,19 @@ $("#ac").addEventListener("click", e => {
   const it = e.target.closest(".ac-item");
   if(it) openDeck(acList[+it.dataset.i]);
 });
-$("#chips").innerHTML = DEVICES.map(d=>'<span class="chip" data-id="'+d.id+'">'+esc(d.name)+'</span>').join("")
-  + '<span class="chip" data-id="__std">표준 공통 절차</span>';
+let CHIPS_ALL = false;
+function renderChips(){
+  const pick = CHIPS_ALL ? DEVICES : DEVICES.filter(d =>
+      d.special || (d.slides && d.slides.length) || (d.catalog && (d.catalog.t === '추천' || d.catalog.pin)));
+  $("#chips").innerHTML =
+      pick.map(d=>'<span class="chip" data-id="'+d.id+'">'+esc(d.name)+'</span>').join("")
+    + '<span class="chip" data-id="__std">표준 공통 절차</span>'
+    + '<span class="chip" data-id="__all">'+(CHIPS_ALL ? '접기 ▲' : '전체 기기 보기 ▾')+'</span>';
+}
+renderChips();
 $("#chips").addEventListener("click", e=>{
   const c = e.target.closest(".chip"); if(!c) return;
+  if(c.dataset.id==="__all"){ CHIPS_ALL = !CHIPS_ALL; renderChips(); return; }
   if(c.dataset.id==="__std") openDeck(null, "");
   else openDeck(DEVICES.find(d=>d.id===c.dataset.id));
 });
@@ -1175,6 +1183,9 @@ function setupLabel(e){
 
 function showEnv(env){
   ENV = env;
+  if (env.setup === 'Game' || env.setup === 'Stream' || env.setup === 'Single') {
+    SETUP = env.setup; renderSetup();
+  } else if (env.caps && env.caps.length) { SETUP = 'Stream'; renderSetup(); }
   const live = env.ifaces.filter(i=>i.active);
   const names = live.length ? live.map(i=>i.name + (i.rates? ' · '+i.rates+'Hz':'')).join(', ')
                             : '활성 오인페 없음';
@@ -1235,6 +1246,60 @@ window.addEventListener("drop", e=>{
 $("#loadBtn").addEventListener("click", ()=> $("#fileIn").click());
 $("#fileIn").addEventListener("change", e=>{ if(e.target.files[0]) readReport(e.target.files[0]); });
 
+
+/* =====================================================================
+   구성 선택 (원컴 / 투컴)
+   ===================================================================== */
+let SETUP = 'Single';
+const SETUPS = [
+  {id:'Single', t:'원컴',            d:'PC 한 대에서 게임·방송·통화를 모두 합니다.'},
+  {id:'Game',   t:'투컴 · 게임PC',   d:'게임 소리만 방송PC로 넘깁니다. <b>마이크·디스코드는 방송PC에서</b> 돌립니다.'},
+  {id:'Stream', t:'투컴 · 방송PC',   d:'마이크·통화·브라우저를 여기서 분리합니다. 게임 소리는 게임PC에서 넘어옵니다.'}
+];
+
+function renderSetup(){
+  $("#setupbar").innerHTML = SETUPS.map(x =>
+    '<button class="sbtn'+(x.id===SETUP?' on':'')+'" data-s="'+x.id+'">'+x.t+'</button>').join('');
+  const cur = SETUPS.find(x => x.id === SETUP);
+  let h = cur.d;
+  if (SETUP !== 'Single') {
+    h += '<br><a data-go-two="1">투컴 배선 가이드 보기 →</a>';
+  }
+  $("#setuphint").innerHTML = h;
+}
+$("#setupbar").addEventListener("click", e => {
+  const b = e.target.closest("[data-s]");
+  if (!b) return;
+  SETUP = b.dataset.s;
+  renderSetup();
+});
+$("#setuphint").addEventListener("click", e => {
+  if (e.target.closest("[data-go-two]")) openDeck(DEVICES.find(d => d.id === "twopc"));
+});
+
+function setupSlide(){
+  if (SETUP === 'Single') return null;
+  const isGame = SETUP === 'Game';
+  return {
+    k: '구성', t: isGame ? '지금은 게임PC 절차입니다' : '지금은 방송PC 절차입니다',
+    body: isGame ? [
+      '게임PC는 <b>게임 소리만</b> 내보내면 됩니다. 출력 하나로 통합합니다.',
+      '<b>마이크·디스코드·브라우저는 방송PC</b>에서 처리합니다. 여기서는 건드리지 않습니다.',
+      '따라서 아래 절차 중 <b>마이크·루프백 관련 단계는 건너뛰어도</b> 됩니다.',
+      '게임PC 소리를 방송PC로 넘기는 배선은 <b>투컴 배선 가이드</b>를 보세요.'
+    ] : [
+      '방송PC가 <b>모든 분리를 담당</b>합니다. 마이크·통화·브라우저를 여기서 나눕니다.',
+      '아래 절차를 <b>그대로 전부</b> 적용합니다.',
+      '게임PC에서 넘어오는 소리는 <b>입력으로 하나 더</b> 받게 됩니다. OBS에서 별도 소스로 잡으세요.',
+      '게임PC 쪽 배선은 <b>투컴 배선 가이드</b>를 보세요.'
+    ],
+    note: isGame
+      ? '게임PC에는 마이크 계통이 없는 것이 정상입니다. 진단에서 "기본 녹음 장치가 오인페가 아님"이 떠도 문제가 아닙니다.'
+      : '이 PC에 마이크가 물려 있어야 합니다. 없다면 구성 선택이 잘못됐을 수 있습니다.'
+  };
+}
+
+renderSetup();
 $("#q").focus();
 </script>
 </body>
