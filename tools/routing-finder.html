@@ -745,6 +745,200 @@ const M62_DECK = {
 };
 DEVICES.push(M62_DECK);
 
+
+const SSL_COMMON_WARN = "SSL 계열은 <b>재생 채널마다 나가는 곳이 정해져 있습니다.</b> RME처럼 아무 출력에나 자유롭게 붙이는 방식이 아니라, 각 쌍이 특정 물리 출력에 묶여 있습니다.";
+
+const SSL12_DECK = {
+  id:"ssl12", name:"SSL 12", mixer:"SSL 360°", status:"draft", grade:"B",
+  alias:["ssl12","ssl 12","에스에스엘12","에스에스엘 12"],
+  note:"공식 SSL 12 User Guide 기준 초안 · 실물 검증 전",
+  slides:[
+    {k:"구조", t:"이 기기가 가진 것", body:[
+      "<b>재생 4쌍</b> — <code>Playback 1-2</code>(메인 모니터 OUT 1-2) · <code>3-4</code>(라인/보조 OUT 3-4) · <code>5-6</code>(헤드폰 A) · <code>7-8</code>(헤드폰 B)",
+      "<b>루프백 1개</b> — 소스를 드롭다운에서 고를 수 있습니다. DAW에서 입력을 <code>Loopback</code>으로 잡아 받습니다.",
+      "<b>독립 믹스 3개</b> — 헤드폰 A / 헤드폰 B / 라인 3-4 (SSL 360° Mixer의 aux 마스터)",
+      SSL_COMMON_WARN
+    ], img:"SSL-12.jpg", cap:"SSL 12 · SSL 360°",
+     note:"루프백이 <b>하나</b>라 방송용만 만들 수 있습니다. 노래방·합주용을 동시에 굴리려면 A급 기기가 필요합니다."},
+
+    {k:"1단계", t:"재생 채널 배정", body:[
+      "<b>Playback 7-8 (헤드폰 B) → <code>MIC</code></b> — REAPER 출력을 여기로. <b>이 쌍이 방송용</b>이 됩니다.",
+      "<b>Playback 1-2 → <code>PC</code></b> — 시스템 소리. 메인 모니터로 나갑니다.",
+      "<b>Playback 3-4 → <code>Chrome</code></b>",
+      "<b>Playback 5-6 (헤드폰 A) → 모니터링</b> — 형이 듣는 헤드폰",
+      "윈도우 장치 이름도 같은 이름으로 바꿉니다 (LoopbackKit)."
+    ], warn:"<b>방송용을 Playback 1-2에 두지 마세요.</b> 1-2는 메인 스피커로 나가는 쌍이라, 거기에 MIC만 올리면 스피커에서 다른 소리가 안 납니다."},
+
+    {k:"2단계", t:"루프백 소스 지정", body:[
+      "SSL 360° Mixer에서 <b>LOOPBACK SOURCE</b> 드롭다운을 엽니다.",
+      "<b><code>Playback 7-8</code></b>(= MIC 쌍)을 선택합니다.",
+      "이제 방송·통화 앱은 DAW/입력 목록에서 <b><code>Loopback</code></b>을 마이크로 지정합니다.",
+      "하드웨어 입력(생마이크)이 그 경로에 섞이지 않는지 확인합니다."
+    ], note:"드롭다운 하나로 끝납니다. RME처럼 서브믹스를 청소할 필요가 없는 대신, <b>고를 수 있는 게 하나뿐</b>입니다."},
+
+    {k:"3단계", t:"모니터링 · 앱 지정", body:[
+      "헤드폰 A(Playback 5-6) 믹스에 <b>듣고 싶은 소리를 전부</b> 올립니다.",
+      "볼륨 믹서에서 <b>Chrome → <code>Chrome</code></b>, <b>Discord → <code>Discord</code></b>로 지정하고 앱을 재시작합니다.",
+      "OBS에서는 <b>애플리케이션 오디오 캡처</b>로 앱별 소리를 따로 잡습니다.",
+      "루프백이 하나뿐이라 <b>앱별 분리는 윈도우와 OBS 쪽에서</b> 처리합니다."
+    ], warn:"<b>확인 필요</b> — 이 기기에서 앱별 분리를 어디까지 할지는 형 표준으로 확정이 필요합니다. B급 공통 과제입니다."},
+
+    {k:"마무리", t:"점검", body:[
+      "전 엔드포인트 샘플레이트 통일.",
+      "기본 재생·녹음 장치가 SSL 12로 잡혀 있는지 확인.",
+      "<b>라우팅 닥터</b>를 돌려 결과 파일 보관.",
+      "실물 확인 결과를 알려주시면 <b>전용 절차</b>로 승격합니다."
+    ], note:"확인할 것 — ① LOOPBACK SOURCE 드롭다운의 실제 선택지 ② 윈도우 녹음 목록에 <code>Loopback</code>이 어떤 이름으로 보이는지"}
+  ]
+};
+
+const SSL18_DECK = {
+  id:"ssl18", name:"SSL 18", mixer:"SSL 360°", status:"draft", grade:"B",
+  alias:["ssl18","ssl 18","에스에스엘18","에스에스엘 18"],
+  note:"공식 SSL 18 User Guide 기준 초안 · 실물 검증 전",
+  slides:[
+    {k:"구조", t:"이 기기가 가진 것", body:[
+      "<b>재생 5쌍</b> — <code>1-2</code>(모니터) · <code>3-4</code>(라인) · <code>5-6</code>(<b>다이렉트 출력, 믹서 우회</b>) · <code>7-8</code>(헤드폰 A) · <code>9-10</code>(헤드폰 B)",
+      "<b>루프백 1개</b> — 소스 선택 가능. DAW <b>입력 9-10</b>으로 돌아옵니다.",
+      "<b>독립 믹스 4개</b> — 모니터(1-2) / 헤드폰 A / 헤드폰 B / 라인 3-4",
+      SSL_COMMON_WARN
+    ], img:"SSL-18.jpeg", cap:"SSL 18 · SSL 360°",
+     note:"12보다 <b>입력이 많아 투컴에 유리합니다.</b> 게임PC에서 넘어오는 소리를 받을 입력이 넉넉합니다."},
+
+    {k:"1단계", t:"재생 채널 배정", body:[
+      "<b>Playback 5-6 → <code>MIC</code></b> — 믹서를 우회하는 다이렉트 출력이라 <b>방송용으로 가장 깨끗합니다.</b>",
+      "<b>Playback 1-2 → <code>PC</code></b> — 시스템 소리, 메인 모니터",
+      "<b>Playback 3-4 → <code>Chrome</code></b>",
+      "<b>Playback 7-8 → 모니터링</b>, <b>9-10</b>은 루프백 반환용으로 비워둡니다.",
+      "윈도우 장치 이름도 동일하게 변경 (LoopbackKit)."
+    ], warn:"<b>입력 9-10은 루프백이 돌아오는 자리</b>입니다. 다른 용도로 쓰면 충돌합니다."},
+
+    {k:"2단계", t:"루프백 소스 지정", body:[
+      "SSL 360° Mixer에서 <b>LOOPBACK SOURCE</b>를 <b><code>Playback 5-6</code></b>(= MIC)로 지정합니다.",
+      "방송·통화 앱은 입력 <b>9-10</b>(Loopback)을 마이크로 잡습니다.",
+      "하드웨어 입력이 그 경로에 섞이지 않는지 확인합니다."
+    ]},
+
+    {k:"투컴", t:"게임PC 소리 받기", body:[
+      "게임PC 소리는 <b>라인 입력</b>으로 받습니다. SSL 18은 입력이 많아 여유가 있습니다.",
+      "받은 입력은 <b>모니터 믹스에는 올리고</b>, 방송용 경로(Playback 5-6)에는 올리지 않습니다.",
+      "OBS에서 그 입력을 <b>별도 소스</b>로 잡습니다.",
+      "배선 방법은 <b>투컴 배선 가이드</b>를 보세요."
+    ], note:"형 평가 그대로 — SSL 18은 투컴 세팅에 문제가 없고, SSL 12는 입력이 적어 다소 아쉽습니다."},
+
+    {k:"마무리", t:"점검", body:[
+      "전 엔드포인트 샘플레이트 통일.",
+      "기본 재생·녹음 장치 확인.",
+      "<b>라우팅 닥터</b> 실행 후 결과 파일 보관.",
+      "실물 확인 결과를 알려주시면 <b>전용 절차</b>로 승격합니다."
+    ], note:"확인할 것 — ① LOOPBACK SOURCE 선택지 ② Playback 5-6 다이렉트 출력이 루프백 소스로 잡히는지"}
+  ]
+};
+DEVICES.push(SSL12_DECK);
+DEVICES.push(SSL18_DECK);
+
+
+const MINIFUSE_DECK = {
+  id:"minifuse", name:"Arturia MiniFuse 2", mixer:"MiniFuse Control Center", status:"draft", grade:"A",
+  alias:["arturia","아투리아","아르투리아","minifuse","미니퓨즈","minifuse 2"],
+  note:"공식 MiniFuse 2 매뉴얼(V1.5 EN) 기준 초안 · 실물 검증 전",
+  slides:[
+    {k:"구조", t:"입문기인데 구조는 A급입니다", body:[
+      "윈도우에서 <b>8 in / 8 out</b>으로 보입니다. 물리 입출력은 2개뿐이고 나머지는 가상 채널입니다.",
+      "<b>독립 믹스 3개</b> — <code>Mix 1/2</code>(물리 Out 1/2 + 가상 7/8) · <code>Mix 3/4</code> · <code>Mix 5/6</code>",
+      "각 믹스가 <b>컴퓨터에 별도 입력으로 돌아옵니다</b> — 가상 3/4, 5/6, 7/8",
+      "믹스마다 <b>+ 아이콘</b>으로 소스를 골라 넣고, 채널별 페이더·팬·뮤트가 있습니다."
+    ], img:"Arturia-MiniFuse-2-OTG.webp", cap:"Arturia MiniFuse Control Center",
+     warn:"<b>확인 필요</b> — 매뉴얼 기준으로는 믹스 3개가 각각 컴퓨터로 돌아오므로 <b>사실상 루프백 3개</b>이고 A급입니다. 다만 이 부분만 실물에서 확인되면 확정입니다. 형 평가('입문기 마지노선')는 음질·안정성 기준이고, <b>라우팅 구조는 가격대에 비해 뛰어납니다.</b>"},
+
+    {k:"1단계", t:"재생 채널 배정", body:[
+      "<b>USB 1/2 → <code>MIC</code></b> — REAPER 출력",
+      "<b>USB 3/4 → <code>Chrome</code></b>",
+      "<b>USB 5/6 → <code>Discord</code></b>",
+      "윈도우 장치 이름도 같은 이름으로 변경 (LoopbackKit)."
+    ]},
+
+    {k:"2단계", t:"용도별 믹스 구성", body:[
+      "<b>Mix 3/4 = 방송용</b> — <code>+</code>로 <code>MIC</code>만 추가합니다. 하드웨어 입력은 넣지 않습니다.",
+      "<b>Mix 5/6 = 노래방·합주용</b> — 필요에 따라 <code>MIC</code> + <code>Chrome</code>",
+      "<b>Mix 1/2 = 모니터링</b> — 듣고 싶은 소리를 전부. 물리 출력으로 나갑니다.",
+      "방송·통화 앱은 각각 <b>가상 입력 3/4, 5/6</b>을 마이크로 지정합니다."
+    ], warn:"하드웨어 입력(생마이크)을 방송용 믹스에 넣지 마세요. REAPER를 거친 소리가 이미 <code>MIC</code>에 있습니다."},
+
+    {k:"마무리", t:"점검", body:[
+      "볼륨 믹서에서 앱별 출력 지정 후 앱 재시작.",
+      "전 엔드포인트 샘플레이트 통일.",
+      "<b>라우팅 닥터</b> 실행 후 결과 보관.",
+      "실물 확인 결과를 알려주시면 <b>전용 절차</b>로 승격합니다."
+    ], note:"확인할 것 — ① 가상 입력 3/4·5/6이 윈도우 녹음 목록에 실제로 뜨는지 ② 믹스마다 소스를 자유롭게 고를 수 있는지"}
+  ]
+};
+
+const SCARLETT_DECK = {
+  id:"scarlett", name:"Focusrite Scarlett 시리즈", mixer:"Focusrite Control / Control 2", status:"draft", grade:"",
+  alias:["focusrite","포커스라이트","scarlett","스칼렛","2i2","4i4","8i6","18i8","솔로","solo"],
+  note:"공식 Focusrite 지원 문서 기준 · 세대·모델별 분기",
+  slides:[
+    {k:"경고", t:"먼저 세대와 모델을 확인하세요", body:[
+      "Scarlett은 <b>같은 이름이라도 세대에 따라 루프백 유무가 다릅니다.</b>",
+      "<b>4세대</b> — Solo · 2i2 · 4i4 · 16i16 · 18i16 · 18i20 <b>전 모델 루프백 있음</b>",
+      "<b>3세대</b> — <b>4i4 · 8i6 · 18i8 · 18i20만</b> 루프백 있음. <b>Solo · 2i2는 없음</b>",
+      "<b>2세대</b> — 루프백 없음 (1세대 8i6만 예외)"
+    ], warn:"고객이 <b>\"스칼렛 2i2 있어요\"</b>라고만 하면 세팅 가능 여부를 알 수 없습니다. <b>3세대인지 4세대인지</b>를 반드시 물어보세요. 3세대 2i2면 루프백이 없어 표준 적용이 불가능합니다."},
+
+    {k:"등급", t:"모델별 등급", body:[
+      "<b>4i4 이상 (3·4세대)</b> — Focusrite Control에서 <b>루프백용 커스텀 믹스</b>를 만들 수 있습니다. → <b>B급</b>",
+      "<b>Solo · 2i2 4세대</b> — 루프백은 있으나(입력 채널 3-4), 소스가 <b>Direct Monitor Mix</b>(하드웨어 입력 + 재생이 함께 섞임)입니다. → <b>C급에 가까움, 확인 필요</b>",
+      "<b>Solo · 2i2 3세대 이하</b> — 루프백 없음 → <b>적용 불가</b>",
+      "즉 같은 Scarlett이라도 <b>4i4 이상이냐 아니냐</b>가 갈림길입니다."
+    ], warn:"<b>확인 필요</b> — 4세대 Solo/2i2에서 Direct Monitor Mix의 하드웨어 입력을 완전히 뺄 수 있는지가 관건입니다. 뺄 수 있으면 B급, 못 빼면 C급입니다."},
+
+    {k:"주의", t:"등급과 별개로 형의 판단은 '구림'", body:[
+      "라우팅이 가능한 모델이라도 <b>브랜드 자체의 드라이버 안정성 이슈</b>가 1~4세대 전반에 있습니다.",
+      "세팅은 되지만 <b>구매를 권하지는 않습니다.</b>",
+      "이미 가지고 있는 고객이라면 세팅해드리되, <b>불안정 가능성을 미리 안내</b>하는 게 좋습니다.",
+      "새로 사는 고객에게는 Topping E OTG나 MiniFuse를 권하세요."
+    ]},
+
+    {k:"절차", t:"4i4 이상 기준 절차", body:[
+      "<b>재생 채널 배정</b> — Playback 1/2 = <code>MIC</code>, 3/4 = <code>Chrome</code>, 이후 <code>Discord</code>",
+      "Focusrite Control에서 <b>Loopback 탭</b>을 열고 커스텀 믹스를 만듭니다.",
+      "그 믹스에 <b><code>MIC</code>만</b> 넣고 하드웨어 입력은 넣지 않습니다.",
+      "방송·통화 앱은 <b>Loopback 입력</b>을 마이크로 지정합니다."
+    ], note:"B급 공통 패턴입니다. 루프백이 하나뿐이므로 방송용만 만듭니다."}
+  ]
+};
+
+const UR22C_DECK = {
+  id:"ur22c", name:"Steinberg UR22C (UR-C 시리즈)", mixer:"dspMixFx", status:"draft", grade:"",
+  alias:["steinberg","스테인버그","ur22","ur22c","ur-c","ur 시리즈"],
+  note:"공식 UR-C V3.0 보충 매뉴얼 기준",
+  slides:[
+    {k:"구조", t:"루프백이 사라지고 장치가 셋으로 나뉘었습니다", body:[
+      "드라이버 <b>V3.0부터 Loopback 파라미터가 없어졌습니다.</b>",
+      "대신 <b>Streaming · Voice · Input1/2</b> 세 개의 USB 오디오 장치로 나뉘어, 앱마다 따로 잡을 수 있게 바뀌었습니다.",
+      "매뉴얼 원문: <i>\"the Streaming, Voice and Input1/2 outputs can be output individually to multiple applications\"</i>",
+      "즉 <b>채널 분리 자체는 됩니다.</b> 형 평가와 일치합니다."
+    ], warn:"<b>다만 형이 지적한 결정적 문제가 따로 있습니다</b> — <b>멀티플 ASIO 미존재.</b> 윤슬 표준은 REAPER가 ASIO로 상시 물려 있어야 하는데, 이 드라이버가 ASIO와 다른 경로를 동시에 못 쓰면 표준 자체가 성립하지 않습니다."},
+
+    {k:"판정", t:"등급 보류", body:[
+      "<b>루프백 구조만 보면</b> 채널이 나뉘므로 적용 가능성이 있습니다.",
+      "<b>그러나 ASIO 동시 사용이 막히면</b> REAPER 처리를 거친 마이크를 만들 수 없어 표준이 무너집니다.",
+      "이건 <b>루프백 등급과는 다른 축의 문제</b>라 A/B/C로 표현되지 않습니다.",
+      "따라서 등급은 <b>보류</b>로 두고, 실물에서 ASIO 동시 사용을 확인한 뒤 판정합니다."
+    ], warn:"확인 방법 — REAPER를 ASIO로 띄운 상태에서 <b>크롬으로 유튜브를 재생</b>해보세요. 소리가 안 나거나 REAPER가 장치를 놓치면 동시 사용이 안 되는 것이고, 그러면 <b>표준 적용 불가</b>입니다."},
+
+    {k:"주의", t:"형의 판단은 '구림'", body:[
+      "채널 분리는 되지만 <b>하드웨어 자체가 아쉽다</b>는 평가입니다.",
+      "새로 사는 고객에게 권할 기기는 아닙니다.",
+      "이미 가진 고객이면 ASIO 동시 사용부터 확인하고 진행 여부를 판단하세요."
+    ]}
+  ]
+};
+DEVICES.push(MINIFUSE_DECK);
+DEVICES.push(SCARLETT_DECK);
+DEVICES.push(UR22C_DECK);
+
 const SVGS = {GRADE:SVG_GRADE, TOPO:SVG_TOPO, TREE:SVG_TREE, OPT:SVG_OPT, ANALOG:SVG_ANALOG};
 DEVICES.push(TWOPC_DECK);
 
@@ -764,19 +958,19 @@ const CATALOG = [
  {n:"Topping M62", a:["m62","엠62","토핑 m62"],
   t:"추천", g:"A", l:"multi", m:"M Control Center", c:"E 시리즈보다 조금 낮은 성능. 다만 베이비페이스 수준의 채널 분리.", img:"Topping-m62.jpg", link:"m62"},
  {n:"SSL 18", a:["ssl18","ssl 18","에스에스엘18"],
-  t:"추천", g:"", l:"", m:"SSL 360", c:"성능·방송 다 좋은 편. 사놨으면 투컴 세팅도 문제 없음.", img:"SSL-18.jpeg", pin:1},
+  t:"추천", g:"B", l:"single", m:"SSL 360", c:"성능·방송 다 좋은 편. 사놨으면 투컴 세팅도 문제 없음.", img:"SSL-18.jpeg", pin:1, link:"ssl18"},
  {n:"Lewitt CONNECT 6", a:["lewitt","르윗","레빗","connect 6","connect6","커넥트6"],
   t:"추천", g:"B", l:"single", m:"CONTROL CENTER", c:"나쁘지 않음. 채널 분리 괜찮고 투컴 세팅도 좋음.", link:"lewitt6"},
  {n:"Audient iD mk2 시리즈", a:["audient","오디언트","id mk2","id4 mk2","id14 mk2","id24","id44"],
   t:"추천", g:"B", l:"single", m:"iD 믹서 앱", c:"무난하나 초보자에게 불친절. 토핑의 존재 때문에 우선 추천하지는 않음.", link:"id14"},
  {n:"SSL 12", a:["ssl12","ssl 12","에스에스엘12"],
-  t:"추천", g:"", l:"", m:"SSL 360", c:"18과 평은 대체로 동일하나 투컴 세팅이 다소 아쉬움.", img:"SSL-12.jpg", pin:1},
+  t:"추천", g:"B", l:"single", m:"SSL 360", c:"18과 평은 대체로 동일하나 투컴 세팅이 다소 아쉬움.", img:"SSL-12.jpg", pin:1, link:"ssl12"},
  {n:"Arturia MiniFuse 시리즈", a:["arturia","아투리아","아르투리아","minifuse","미니퓨즈"],
-  t:"추천", g:"", l:"", m:"MiniFuse Control Center", c:"무난한 성능, 무난한 안정성. 입문기 마지노선.", img:"Arturia-MiniFuse-2-OTG.webp", pin:1},
+  t:"추천", g:"A", l:"multi", m:"MiniFuse Control Center", c:"무난한 성능, 무난한 안정성. 입문기 마지노선.", img:"Arturia-MiniFuse-2-OTG.webp", pin:1, link:"minifuse"},
  {n:"Black Lion Audio Revolution 2x2", a:["black lion","블랙라이온","revolution 2x2"],
   t:"추천", g:"", l:"", m:"", c:"이제 국내에서 안 팔림."},
- {n:"Audient EVO 시리즈", a:["evo","이보","evo4","evo8","evo16"],
-  t:"추천", g:"", l:"", m:"EVO 앱", c:"미니퓨즈와 토핑의 존재로 요즘은 추천하지 않음."},
+ {n:"Audient EVO 시리즈 (EVO 4 / 8 / 16)", a:["evo","이보","evo4","evo8","evo16","에보"],
+  t:"추천", g:"B", l:"single", m:"EVO 앱 / EVO Control", c:"미니퓨즈와 토핑의 존재로 요즘은 추천하지 않음. EVO 16은 루프백 소스 선택 가능(채널 23-24), EVO 4·8은 동일 구조로 추정."},
  {n:"Maono PS22 Lite", a:["maono","마오노","ps22","ps22 lite"],
   t:"추천", g:"", l:"", m:"제조사 앱", c:"미니퓨즈 염가판 느낌. 초저가형에서는 강자."},
 
@@ -805,13 +999,13 @@ const CATALOG = [
  // ---- 구림 ----
  {n:"Audient iD mk1 시리즈 (iD14 / iD22 / iD44)", a:["id mk1","id14 mk1","id22","id44 mk1"],
   t:"구림", g:"B", l:"single", m:"iD 믹서 앱", c:"유사 루프백 가능. 성능·안정성은 아쉬움.", link:"id14"},
- {n:"Focusrite Scarlett 시리즈", a:["focusrite","포커스라이트","scarlett","스칼렛","2i2","4i4","솔로"],
-  t:"구림", g:"", l:"", m:"Focusrite Control", c:"브랜드 자체가 드라이버 안정성 이슈 존재 (1~4세대)."},
+ {n:"Focusrite Scarlett 시리즈", a:["focusrite","포커스라이트","scarlett","스칼렛","2i2","4i4","8i6","18i8","솔로","solo"],
+  t:"구림", g:"", l:"", m:"Focusrite Control / Control 2", c:"브랜드 자체가 드라이버 안정성 이슈 존재 (1~4세대). 루프백은 세대·모델마다 다름 — 반드시 확인 필요.", link:"scarlett"},
  {n:"Focusrite Clarett 시리즈", a:["clarett","클라렛"], t:"구림", g:"", l:"", m:"Focusrite Control", c:"브랜드 제품 자체가 드라이버 안정성 이슈 존재."},
  {n:"PreSonus Revelator io24", a:["presonus","프리소너스","revelator","io24"], t:"구림", g:"", l:"", m:"UC Surface", c:"하드웨어 구림, 안정성 이슈."},
  {n:"PreSonus Revelator io44", a:["io44"], t:"구림", g:"", l:"", m:"UC Surface", c:"하드웨어 구림, 안정성 이슈."},
- {n:"Steinberg UR22C", a:["steinberg","스테인버그","ur22","ur22c","ur 시리즈"],
-  t:"구림", g:"", l:"", m:"dspMixFx", c:"채널 분리는 되나 멀티플 ASIO 미존재. 하드웨어 구림."},
+ {n:"Steinberg UR22C (UR-C 시리즈)", a:["steinberg","스테인버그","ur22","ur22c","ur 시리즈","ur-c"],
+  t:"구림", g:"", l:"", m:"dspMixFx", c:"채널 분리는 되나 멀티플 ASIO 미존재. 하드웨어 구림. 드라이버 V3.0부터 루프백이 없어지고 Streaming/Voice/Input1-2 세 개의 USB 장치로 분리됨.", link:"ur22c"},
  {n:"Yamaha AG03 / AG06", a:["yamaha","야마하","ag03","ag06","ag 03","ag 06"],
   t:"구림", g:"C", l:"fixed", m:"AG 유틸", c:"세팅 없이 그대로 쓸 유저만 구매하세요."},
  {n:"ESI Amber", a:["esi","이에스아이","amber"], t:"구림", g:"", l:"", m:"", c:"전반적으로 다 구림."},
